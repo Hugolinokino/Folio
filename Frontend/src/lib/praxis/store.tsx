@@ -3,6 +3,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { praxisApi, type CaseSummaryDto, type CaseDetailDto, type ParteiDto, type DeadlineDto, type DocumentDto, type ChronoEventDto, type CorrespondenceDto, type BillingEntryDto, type DraftDto } from './api';
 import { countWords, daysUntil, formatDateDe, formatRelative, todayIso } from './format';
 import { extractPdfText } from './pdf';
+import { embedDocument, computeClusters as runClusters } from './semantic';
 import type { Fall, Frist, RadarRow } from './types';
 
 interface CaseListContextValue {
@@ -137,6 +138,7 @@ function assembleFall(
       filePath: a.filePath,
       content: a.content,
       datum: a.docDate ? formatDateDe(a.docDate) : '',
+      clusterId: a.clusterId,
     })),
     chrono: chrono.map((c) => ({ id: c.id, datum: formatDateDe(c.eventDate), ereignis: c.ereignis, beleg: c.beleg || '' })),
     korrespondenz: korrespondenz.map((k) => ({
@@ -246,8 +248,17 @@ export function useCaseWorkspace(caseId: string | null) {
     const fileName = selected.split(/[\\/]/).pop() || 'Dokument.pdf';
     const titel = fileName.replace(/\.pdf$/i, '');
     const nr = `act. ${fall.akten.length + 1}`;
-    await praxisApi.importDocument(caseId, selected, nr, titel, '', 'Beilage', folder, text, pages, todayIso());
+    const doc = await praxisApi.importDocument(caseId, selected, nr, titel, '', 'Beilage', folder, text, pages, todayIso());
+    // Embedding generation runs in the background worker — never gates the upload UI.
+    void embedDocument(doc.id, text);
     await reload();
+  };
+
+  const clusterDocuments = async (onProgress?: (msg: string) => void) => {
+    if (!caseId || !fall) return null;
+    const k = await runClusters(caseId, fall.akten, onProgress);
+    if (k !== null) await reload();
+    return k;
   };
 
   return {
@@ -263,5 +274,6 @@ export function useCaseWorkspace(caseId: string | null) {
     addDraft,
     updateDraftContent,
     uploadDocument,
+    clusterDocuments,
   };
 }

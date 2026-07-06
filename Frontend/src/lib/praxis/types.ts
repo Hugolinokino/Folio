@@ -38,6 +38,7 @@ export interface Akte {
   filePath: string;
   content: string | null;
   datum: string;
+  clusterId: number | null;
 }
 
 export interface ChronoEvent {

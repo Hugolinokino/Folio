@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Icon } from '../../components/Icon';
 import { todayIso } from '../../lib/praxis/format';
 import { useCaseWorkspace } from '../../lib/praxis/store';
+import { semanticSearch, type SearchHit } from '../../lib/praxis/semantic';
 import type { Fall } from '../../lib/praxis/types';
 
 type Workspace = ReturnType<typeof useCaseWorkspace>;
@@ -26,7 +27,9 @@ export function FallSpace({
 }) {
   const ws = useCaseWorkspace(fallId);
   const { fall, loading } = ws;
-  const [tab, setTab] = useState(initialTab || 'uebersicht');
+  // 'akten.befragen' targets the Befragen sub-view inside the Akten tab.
+  const [initialMain, initialSub] = (initialTab || '').split('.');
+  const [tab, setTab] = useState(initialMain || 'uebersicht');
 
   if (loading || !fall) {
     return (
@@ -65,7 +68,7 @@ export function FallSpace({
       </div>
 
       {tab === 'uebersicht' && <FallUebersicht fall={fall} onOpenWorkbench={onOpenWorkbench} goTab={setTab} addDraft={ws.addDraft} />}
-      {tab === 'akten' && <FallAkten fall={fall} uploadDocument={ws.uploadDocument} />}
+      {tab === 'akten' && <FallAkten fall={fall} uploadDocument={ws.uploadDocument} clusterDocuments={ws.clusterDocuments} initialAnsicht={initialSub} />}
       {tab === 'fristen' && <FallFristen fall={fall} addFrist={ws.addFrist} completeFrist={ws.completeFrist} />}
       {tab === 'chronologie' && <FallChrono fall={fall} addChronoEvent={ws.addChronoEvent} />}
       {tab === 'korrespondenz' && <FallPost fall={fall} addCorrespondence={ws.addCorrespondence} />}
@@ -201,12 +204,31 @@ function FallUebersicht({
   );
 }
 
-/* ---------- Akten: Verzeichnis + Ordner ---------- */
-function FallAkten({ fall, uploadDocument }: { fall: Fall; uploadDocument: Workspace['uploadDocument'] }) {
-  const [ansicht, setAnsicht] = useState('verzeichnis');
+/* ---------- Akten: Verzeichnis + Ordner + Befragen ---------- */
+const CLUSTER_COLORS = ['var(--accent-blue)', 'var(--accent-red)', 'var(--accent-green)', 'var(--accent-amber)', 'var(--ink)'];
+const clusterColor = (c: number) => CLUSTER_COLORS[c % CLUSTER_COLORS.length];
+
+function FallAkten({
+  fall,
+  uploadDocument,
+  clusterDocuments,
+  initialAnsicht,
+}: {
+  fall: Fall;
+  uploadDocument: Workspace['uploadDocument'];
+  clusterDocuments: Workspace['clusterDocuments'];
+  initialAnsicht?: string;
+}) {
+  const [ansicht, setAnsicht] = useState(initialAnsicht || 'verzeichnis');
   const [sel, setSel] = useState<number | null>(null);
   const [importing, setImporting] = useState(false);
+  const [clustering, setClustering] = useState(false);
+  const [clusterFilter, setClusterFilter] = useState<number | null>(null);
+  const [progress, setProgress] = useState('');
   const ordner = [...new Set(fall.akten.map((a) => a.ordner))];
+
+  const clusterIds = [...new Set(fall.akten.filter((a) => a.clusterId != null).map((a) => a.clusterId as number))].sort((x, y) => x - y);
+  const visibleAkten = clusterFilter === null ? fall.akten : fall.akten.filter((a) => a.clusterId === clusterFilter);
 
   const handleUpload = async () => {
     setImporting(true);
@@ -217,36 +239,81 @@ function FallAkten({ fall, uploadDocument }: { fall: Fall; uploadDocument: Works
     }
   };
 
+  const handleCluster = async () => {
+    setClustering(true);
+    setProgress('Modell wird geladen …');
+    try {
+      const k = await clusterDocuments(setProgress);
+      setProgress(k === null ? 'Zu wenige Akten mit Text für ein Clustering (mind. 2).' : '');
+      setClusterFilter(null);
+    } catch (err) {
+      setProgress(`Clustering fehlgeschlagen: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setClustering(false);
+    }
+  };
+
   return (
     <div className="col" style={{ flex: 1, minHeight: 0, gap: 12 }}>
       <div className="row-flex">
         <div className="tabs">
           <span className={`tab ${ansicht === 'verzeichnis' ? 'on' : ''}`} onClick={() => setAnsicht('verzeichnis')}>Verzeichnis</span>
           <span className={`tab ${ansicht === 'ordner' ? 'on' : ''}`} onClick={() => setAnsicht('ordner')}>Ordner</span>
+          <span className={`tab ${ansicht === 'befragen' ? 'on' : ''}`} onClick={() => setAnsicht('befragen')}>Befragen</span>
         </div>
         <div className="spacer"></div>
+        {progress && <span className="t-mono-sm" style={{ marginRight: 10 }}>{progress}</span>}
+        <button className="btn-ghost-glass" onClick={handleCluster} disabled={clustering || fall.akten.length < 2} style={{ marginRight: 8 }}>
+          <Icon name="graph" size={13} /> {clustering ? 'Wird berechnet…' : 'Cluster berechnen'}
+        </button>
         <button className="btn-primary-dark" onClick={handleUpload} disabled={importing}>
           <Icon name="upload" size={13} /> {importing ? 'Wird importiert…' : 'Akte hochladen'}
         </button>
       </div>
 
-      {ansicht === 'verzeichnis' ? (
+      {ansicht === 'verzeichnis' && clusterIds.length > 0 && (
+        <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
+          <span className="t-mono-sm" style={{ marginRight: 4 }}>Cluster:</span>
+          {clusterIds.map((c) => {
+            const count = fall.akten.filter((a) => a.clusterId === c).length;
+            return (
+              <span
+                key={c}
+                className={`chip ${clusterFilter === c ? 'on' : ''}`}
+                onClick={() => setClusterFilter(clusterFilter === c ? null : c)}
+              >
+                <span className="cluster-dot" style={{ background: clusterColor(c) }}></span>
+                Cluster {c + 1} ({count})
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      {ansicht === 'verzeichnis' && (
         <div className="panel scroll" style={{ flex: 1, overflow: 'auto', padding: '8px 16px' }}>
           <div className="akt-row akt-head">
             <span>Nr.</span><span>Datum</span><span>Titel</span><span>Absender</span><span>Typ</span><span style={{ textAlign: 'right' }}>Seiten</span>
           </div>
-          {fall.akten.map((a, i) => (
+          {visibleAkten.map((a, i) => (
             <div key={a.id} className={`akt-row ${sel === i ? 'on' : ''}`} onClick={() => setSel(sel === i ? null : i)}>
               <span className="akt-nr">{a.nr}</span>
               <span className="akt-dat">{a.datum}</span>
-              <span className="akt-titel">{a.titel}</span>
+              <span className="akt-titel">
+                {a.clusterId != null && (
+                  <span className="cluster-dot" title={`Cluster ${a.clusterId + 1}`} style={{ background: clusterColor(a.clusterId) }}></span>
+                )}
+                {a.titel}
+              </span>
               <span className="akt-abs">{a.absender}</span>
               <span><span className="akt-typ">{a.typ}</span></span>
               <span className="akt-seiten">{a.seiten}</span>
             </div>
           ))}
         </div>
-      ) : (
+      )}
+
+      {ansicht === 'ordner' && (
         <div className="ordner-grid scroll" style={{ flex: 1, overflow: 'auto' }}>
           {ordner.map((o) => (
             <div key={o} className="panel">
@@ -265,6 +332,97 @@ function FallAkten({ fall, uploadDocument }: { fall: Fall; uploadDocument: Works
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {ansicht === 'befragen' && <FallBefragen fall={fall} />}
+    </div>
+  );
+}
+
+/* ---------- Akten befragen: semantische Suche über die Fall-Akten ---------- */
+function FallBefragen({ fall }: { fall: Fall }) {
+  const [query, setQuery] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState('');
+  const [hits, setHits] = useState<SearchHit[] | null>(null);
+
+  const embeddable = fall.akten.filter((a) => a.content && a.content.trim().length > 0);
+
+  const runSearch = async () => {
+    const q = query.trim();
+    if (!q || busy) return;
+    setBusy(true);
+    setStatus('Modell wird geladen …');
+    try {
+      const results = await semanticSearch(fall.id, fall.akten, q, setStatus);
+      setHits(results);
+      setStatus('');
+    } catch (err) {
+      setStatus(`Suche fehlgeschlagen: ${err instanceof Error ? err.message : String(err)}`);
+      setHits(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="panel scroll" style={{ flex: 1, overflow: 'auto' }}>
+      <div className="panel-head">
+        <span className="title">Akten befragen</span>
+        <span className="t-mono-sm">semantische Suche · lokal, ohne Cloud</span>
+      </div>
+
+      <div className="search" style={{ marginBottom: 8, padding: '12px 16px' }}>
+        <Icon name="search" size={15} />
+        <input
+          placeholder="Frage oder Suchbegriff — z.B. Wann wurde die Kündigung zugestellt?"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && runSearch()}
+          disabled={busy}
+        />
+        <button className="btn-ghost-glass" style={{ height: 30 }} onClick={runSearch} disabled={busy || !query.trim()}>
+          {busy ? 'Läuft…' : 'Suchen'}
+        </button>
+      </div>
+      <p className="t-sans-sm" style={{ marginBottom: 16 }}>
+        Die Frage wird lokal in einen Vektor übersetzt und gegen die Akten-Embeddings verglichen —
+        die passendsten Aktenstellen erscheinen gereiht, ohne generierte Antwort.
+      </p>
+
+      {status && <div className="t-mono-sm" style={{ marginBottom: 12 }}>{status}</div>}
+
+      {embeddable.length === 0 && (
+        <div className="t-sans-sm">Keine Akten mit extrahiertem Text vorhanden — zuerst eine PDF-Akte hochladen.</div>
+      )}
+
+      {hits && (
+        <div className="col" style={{ gap: 10 }}>
+          {hits.slice(0, 6).map((h) => {
+            const akte = fall.akten.find((a) => a.id === h.id);
+            if (!akte) return null;
+            const pct = Math.max(0, Math.round(h.score * 100));
+            return (
+              <div key={h.id} className="panel" style={{ padding: '12px 14px' }}>
+                <div className="row-flex" style={{ gap: 10, marginBottom: 6 }}>
+                  <span className="akt-nr">{akte.nr}</span>
+                  <span className="od-t" style={{ fontWeight: 500 }}>{akte.titel}</span>
+                  <span className="spacer"></span>
+                  <span className="t-mono-num" style={{ fontSize: 12 }}>{pct}%</span>
+                  <span style={{ width: 56, height: 3, background: 'var(--line-1)', borderRadius: 2, overflow: 'hidden', alignSelf: 'center' }}>
+                    <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: 'var(--accent)' }}></span>
+                  </span>
+                </div>
+                {akte.content && (
+                  <p className="t-sans-sm" style={{ margin: 0, lineHeight: 1.5 }}>
+                    {akte.content.trim().slice(0, 260)}{akte.content.trim().length > 260 ? '…' : ''}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+          {hits.length === 0 && <div className="t-sans-sm">Keine Treffer.</div>}
         </div>
       )}
     </div>

@@ -15,7 +15,7 @@ export function PraxisHome({
     { icon: 'pen', t: 'Eingabe entwerfen', go: () => { if (cases.length) onOpenFall(cases[0].id, 'uebersicht'); } },
     { icon: 'upload', t: 'Akte erfassen', go: () => { if (cases.length) onOpenFall(cases[0].id, 'akten'); } },
     { icon: 'time', t: 'Frist erfassen', go: () => { if (cases.length) onOpenFall(cases[0].id, 'fristen'); } },
-    { icon: 'chat', t: 'Akten befragen', go: () => { if (cases.length) onOpenFall(cases[0].id, 'akten'); } },
+    { icon: 'chat', t: 'Akten befragen', go: () => { if (cases.length) onOpenFall(cases[0].id, 'akten.befragen'); } },
   ];
 
   return (

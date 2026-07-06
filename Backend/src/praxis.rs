@@ -338,6 +338,7 @@ pub struct DocumentRow {
     content: Option<String>,
     folder: Option<String>,
     doc_date: Option<String>,
+    cluster_id: Option<i64>,
 }
 
 #[tauri::command]
@@ -345,7 +346,7 @@ pub fn list_documents(state: tauri::State<AppState>, case_id: String) -> Result<
     let guard = state.conn.lock().unwrap();
     let conn = guard.as_ref().ok_or("Workspace is locked.")?;
     let mut stmt = conn
-        .prepare("SELECT id, case_id, nr, title, sender, doc_type, pages, file_path, content, folder, doc_date FROM documents WHERE case_id = ?1 ORDER BY rowid ASC")
+        .prepare("SELECT id, case_id, nr, title, sender, doc_type, pages, file_path, content, folder, doc_date, cluster_id FROM documents WHERE case_id = ?1 ORDER BY rowid ASC")
         .map_err(|e| e.to_string())?;
     let rows = stmt
         .query_map(rusqlite::params![case_id], |row| {
@@ -361,6 +362,7 @@ pub fn list_documents(state: tauri::State<AppState>, case_id: String) -> Result<
                 content: row.get(8)?,
                 folder: row.get(9)?,
                 doc_date: row.get(10)?,
+                cluster_id: row.get(11)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -425,7 +427,79 @@ pub fn import_document(
         content: Some(content),
         folder: Some(folder),
         doc_date: Some(doc_date),
+        cluster_id: None,
     })
+}
+
+// ============================================================
+// Offline-KI: embeddings & clustering (Akten)
+// ============================================================
+//
+// The 384-dim MiniLM vectors are computed entirely in the frontend's Web
+// Worker; Rust only stores and returns the raw little-endian f32 bytes.
+// Distance math (cosine similarity, k-means) also lives in the frontend so
+// the backend stays a dumb, testable byte store.
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentEmbedding {
+    id: String,
+    embedding: Option<Vec<u8>>,
+}
+
+fn set_document_embedding(conn: &rusqlite::Connection, document_id: &str, embedding: &[u8]) -> rusqlite::Result<usize> {
+    conn.execute(
+        "UPDATE documents SET embedding = ?2 WHERE id = ?1",
+        rusqlite::params![document_id, embedding],
+    )
+}
+
+fn set_document_clusters(conn: &rusqlite::Connection, assignments: &[(String, i64)]) -> rusqlite::Result<()> {
+    for (document_id, cluster_id) in assignments {
+        conn.execute(
+            "UPDATE documents SET cluster_id = ?2 WHERE id = ?1",
+            rusqlite::params![document_id, cluster_id],
+        )?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn update_document_embedding(state: tauri::State<AppState>, document_id: String, embedding: Vec<u8>) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    set_document_embedding(conn, &document_id, &embedding).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn list_document_embeddings(state: tauri::State<AppState>, case_id: String) -> Result<Vec<DocumentEmbedding>, String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    let mut stmt = conn
+        .prepare("SELECT id, embedding FROM documents WHERE case_id = ?1 ORDER BY rowid ASC")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![case_id], |row| {
+            Ok(DocumentEmbedding { id: row.get(0)?, embedding: row.get(1)? })
+        })
+        .map_err(|e| e.to_string())?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClusterAssignment {
+    document_id: String,
+    cluster_id: i64,
+}
+
+#[tauri::command]
+pub fn assign_document_clusters(state: tauri::State<AppState>, assignments: Vec<ClusterAssignment>) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    let pairs: Vec<(String, i64)> = assignments.into_iter().map(|a| (a.document_id, a.cluster_id)).collect();
+    set_document_clusters(conn, &pairs).map_err(|e| e.to_string())
 }
 
 // ============================================================
@@ -646,4 +720,74 @@ pub fn update_draft_content(state: tauri::State<AppState>, draft_id: String, con
     )
     .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn open_test_db() -> (rusqlite::Connection, std::path::PathBuf) {
+        let path = std::env::temp_dir().join(format!("folio-praxis-test-{}.db", uuid::Uuid::new_v4()));
+        let _ = std::fs::remove_file(&path);
+        let conn = crate::db::open_and_key(&path, "00112233445566778899aabbccddeeff").expect("open db");
+        crate::db::migrate(&conn).expect("migrate");
+        conn.execute(
+            "INSERT INTO cases (id, title, ref, phase) VALUES ('case-1', 'Test', 'M-2026-001', 'Neu')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO documents (id, case_id, nr, title, file_path) VALUES ('doc-1', 'case-1', 'act. 1', 'Akte', '/tmp/a.pdf')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO documents (id, case_id, nr, title, file_path) VALUES ('doc-2', 'case-1', 'act. 2', 'Akte 2', '/tmp/b.pdf')",
+            [],
+        )
+        .unwrap();
+        (conn, path)
+    }
+
+    #[test]
+    fn embedding_blob_round_trips_byte_exact() {
+        let (conn, path) = open_test_db();
+
+        // 384-dim f32 vector as little-endian bytes — exactly what the frontend sends.
+        let floats: Vec<f32> = (0..384).map(|i| (i as f32) * 0.25 - 3.0).collect();
+        let bytes: Vec<u8> = floats.iter().flat_map(|f| f.to_le_bytes()).collect();
+        assert_eq!(set_document_embedding(&conn, "doc-1", &bytes).unwrap(), 1);
+
+        let stored: Vec<u8> = conn
+            .query_row("SELECT embedding FROM documents WHERE id = 'doc-1'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(stored, bytes);
+
+        let missing: Option<Vec<u8>> = conn
+            .query_row("SELECT embedding FROM documents WHERE id = 'doc-2'", [], |r| r.get(0))
+            .unwrap();
+        assert!(missing.is_none(), "untouched documents keep a NULL embedding");
+
+        drop(conn);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn cluster_assignments_update_all_given_documents() {
+        let (conn, path) = open_test_db();
+
+        set_document_clusters(&conn, &[("doc-1".into(), 0), ("doc-2".into(), 2)]).unwrap();
+
+        let c1: i64 = conn.query_row("SELECT cluster_id FROM documents WHERE id = 'doc-1'", [], |r| r.get(0)).unwrap();
+        let c2: i64 = conn.query_row("SELECT cluster_id FROM documents WHERE id = 'doc-2'", [], |r| r.get(0)).unwrap();
+        assert_eq!((c1, c2), (0, 2));
+
+        // Re-clustering overwrites previous assignments.
+        set_document_clusters(&conn, &[("doc-2".into(), 1)]).unwrap();
+        let c2b: i64 = conn.query_row("SELECT cluster_id FROM documents WHERE id = 'doc-2'", [], |r| r.get(0)).unwrap();
+        assert_eq!(c2b, 1);
+
+        drop(conn);
+        let _ = std::fs::remove_file(&path);
+    }
 }

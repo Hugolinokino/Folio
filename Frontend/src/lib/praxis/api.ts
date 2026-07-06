@@ -62,6 +62,12 @@ export interface DocumentDto {
   content: string | null;
   folder: string | null;
   docDate: string | null;
+  clusterId: number | null;
+}
+
+export interface DocumentEmbeddingDto {
+  id: string;
+  embedding: number[] | null;
 }
 
 export interface ChronoEventDto {
@@ -129,6 +135,11 @@ export const praxisApi = {
     pages: number | null,
     docDate: string,
   ) => invoke<DocumentDto>('import_document', { caseId, sourcePath, nr, title, sender, docType, folder, content, pages, docDate }),
+  updateDocumentEmbedding: (documentId: string, embedding: number[]) =>
+    invoke<void>('update_document_embedding', { documentId, embedding }),
+  listDocumentEmbeddings: (caseId: string) => invoke<DocumentEmbeddingDto[]>('list_document_embeddings', { caseId }),
+  assignDocumentClusters: (assignments: { documentId: string; clusterId: number }[]) =>
+    invoke<void>('assign_document_clusters', { assignments }),
 
   listChrono: (caseId: string) => invoke<ChronoEventDto[]>('list_chrono', { caseId }),
   createChronoEvent: (caseId: string, eventDate: string, ereignis: string, beleg: string) =>
