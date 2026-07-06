@@ -6,7 +6,10 @@ import { FallSpace } from '../modules/praxis/FallSpace';
 import { Workbench } from '../modules/praxis/Workbench';
 import { CaseListProvider, useCaseList } from '../lib/praxis/store';
 import { praxisMeta, type PraxisViewId } from '../lib/praxis/nav';
-import { AcademiaHome } from '../modules/AcademiaHome';
+import { AcademiaHome } from '../modules/academia/AcademiaHome';
+import { ProjectSpace } from '../modules/academia/ProjectSpace';
+import { ProjectListProvider, useProjectList } from '../lib/academia/store';
+import { academiaMeta, type AcademiaViewId } from '../lib/academia/nav';
 import { StrategieProvider, useStrategie } from '../lib/strategie/store';
 import { StrategieHome } from '../modules/strategie/StrategieHome';
 import { Analyse } from '../modules/strategie/Analyse';
@@ -42,7 +45,9 @@ export function Shell() {
   return (
     <StrategieProvider>
       <CaseListProvider>
-        <ShellInner />
+        <ProjectListProvider>
+          <ShellInner />
+        </ProjectListProvider>
       </CaseListProvider>
     </StrategieProvider>
   );
@@ -64,6 +69,13 @@ function ShellInner() {
   const [newFallTitle, setNewFallTitle] = useState('');
   const [fallInitTab, setFallInitTab] = useState<Record<string, string>>({});
   const { cases } = useCaseList();
+
+  const [acView, setAcView] = useState<AcademiaViewId>('a-home');
+  const [acTabs, setAcTabs] = useState<AcademiaViewId[]>(['a-home']);
+  const [acSwitchOpen, setAcSwitchOpen] = useState(false);
+  const [newProjectTitle, setNewProjectTitle] = useState('');
+  const [projectInitTab, setProjectInitTab] = useState<Record<string, string>>({});
+  const { projects } = useProjectList();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -124,6 +136,33 @@ function ShellInner() {
     });
   };
 
+  const openProject = (projectId: string, tab?: string) => {
+    if (tab) setProjectInitTab((m) => ({ ...m, [projectId]: tab }));
+    const v: AcademiaViewId = `project:${projectId}`;
+    setAcView(v);
+    setAcTabs((t) => (t.includes(v) ? t : [...t, v]));
+  };
+  const closeAcTab = (e: React.MouseEvent, v: AcademiaViewId) => {
+    e.stopPropagation();
+    setAcTabs((t) => {
+      const nt = t.filter((x) => x !== v);
+      if (acView === v) {
+        const idx = t.indexOf(v);
+        setAcView(nt[Math.min(idx, nt.length - 1)] || 'a-home');
+      }
+      return nt.length ? nt : ['a-home'];
+    });
+  };
+
+  const renderAcademia = () => {
+    if (acView === 'a-home') return <AcademiaHome onOpenProject={openProject} />;
+    if (acView.startsWith('project:')) {
+      const projectId = acView.slice(8);
+      return <ProjectSpace key={acView} projectId={projectId} initialTab={projectInitTab[projectId]} />;
+    }
+    return null;
+  };
+
   const renderPraxis = () => {
     if (pxView === 'p-home') return <PraxisHome onOpenFall={openFall} onOpenWorkbench={openWorkbench} />;
     if (pxView.startsWith('fall:')) {
@@ -139,7 +178,7 @@ function ShellInner() {
 
   const renderContent = () => {
     if (mode === 'praxis') return renderPraxis();
-    if (mode === 'academia') return <AcademiaHome />;
+    if (mode === 'academia') return renderAcademia();
     const Comp = ST_VIEW_COMP[stView];
     return <Comp onOpen={openStView} />;
   };
@@ -180,6 +219,14 @@ function ShellInner() {
               newFallTitle={newFallTitle}
               setNewFallTitle={setNewFallTitle}
               onOpenFall={openFall}
+            />
+          ) : mode === 'academia' ? (
+            <AcademiaSwitcher
+              open={acSwitchOpen}
+              setOpen={setAcSwitchOpen}
+              newProjectTitle={newProjectTitle}
+              setNewProjectTitle={setNewProjectTitle}
+              onOpenProject={openProject}
             />
           ) : (
             <div className="ws-switch">
@@ -231,6 +278,29 @@ function ShellInner() {
                   );
                 })}
               </>
+            ) : mode === 'academia' ? (
+              <>
+                <div
+                  className="nav-i"
+                  onClick={() => (projects[0] ? openProject(projects[0].id, 'notizen') : setAcView('a-home'))}
+                >
+                  <span className="ico"><Icon name="edit" size={16} /></span> Notiz anlegen
+                </div>
+                <div className={`nav-i ${acView === 'a-home' ? 'on' : ''}`} onClick={() => setAcView('a-home')}>
+                  <span className="ico"><Icon name="home" size={16} /></span> Startseite
+                </div>
+
+                <div className="side-label">Projekte</div>
+                {projects.map((p) => {
+                  const vid = `project:${p.id}`;
+                  return (
+                    <div key={p.id} className={`nav-i ${acView === vid ? 'on' : ''}`} onClick={() => openProject(p.id)}>
+                      <span className="ico"><span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '0.02em' }}>{p.title.slice(0, 2).toUpperCase()}</span></span>
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</span>
+                    </div>
+                  );
+                })}
+              </>
             ) : (
               <div className="nav-i on">
                 <span className="ico"><Icon name={MODE_ICON[mode]} size={16} /></span>
@@ -275,6 +345,19 @@ function ShellInner() {
                     <span className="tt">{meta.label}</span>
                     {v !== 'p-home' && (
                       <span className="x" onClick={(e) => closePxTab(e, v)}><Icon name="close" size={12} /></span>
+                    )}
+                  </div>
+                );
+              })
+            ) : mode === 'academia' ? (
+              acTabs.map((v) => {
+                const meta = academiaMeta(v, projects);
+                return (
+                  <div key={v} className={`doc-tab ${acView === v ? 'on' : ''}`} onClick={() => setAcView(v)}>
+                    <span className="ico"><Icon name={meta.icon} size={14} /></span>
+                    <span className="tt">{meta.label}</span>
+                    {v !== 'a-home' && (
+                      <span className="x" onClick={(e) => closeAcTab(e, v)}><Icon name="close" size={12} /></span>
                     )}
                   </div>
                 );
@@ -344,6 +427,62 @@ function PraxisSwitcher({
               placeholder="Neuer Fall …"
               value={newFallTitle}
               onChange={(e) => setNewFallTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && create()}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button className="po-add-btn" onClick={create}><Icon name="plus" size={13} /></button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AcademiaSwitcher({
+  open,
+  setOpen,
+  newProjectTitle,
+  setNewProjectTitle,
+  onOpenProject,
+}: {
+  open: boolean;
+  setOpen: (fn: (o: boolean) => boolean) => void;
+  newProjectTitle: string;
+  setNewProjectTitle: (v: string) => void;
+  onOpenProject: (id: string) => void;
+}) {
+  const { projects, createProject } = useProjectList();
+
+  const create = () => {
+    const name = newProjectTitle.trim();
+    if (!name) return;
+    createProject(name, 'Projekt', '').then(() => setOpen(() => false));
+    setNewProjectTitle('');
+  };
+
+  return (
+    <div className="ws-switch" onClick={() => setOpen((o) => !o)}>
+      <span className="av">PR</span>
+      <span className="nm">Projekte{projects.length > 0 ? ` (${projects.length})` : ''}</span>
+      <span className="cv"><Icon name="chevron-down" size={15} /></span>
+      {open && (
+        <div className="pop" onClick={(e) => e.stopPropagation()}>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-5)', padding: '4px 10px 6px' }}>
+            Projekt öffnen
+          </div>
+          {projects.map((p) => (
+            <div key={p.id} className="po" onClick={() => { onOpenProject(p.id); setOpen(() => false); }}>
+              <span className="pc" style={{ background: 'var(--accent)' }}></span>
+              <span className="pt">{p.title}</span>
+              <span className="ps">{p.type}</span>
+            </div>
+          ))}
+          <div className="po-add">
+            <input
+              className="po-add-input"
+              placeholder="Neues Projekt …"
+              value={newProjectTitle}
+              onChange={(e) => setNewProjectTitle(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && create()}
               onClick={(e) => e.stopPropagation()}
             />

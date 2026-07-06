@@ -1,3 +1,5 @@
+mod academia;
+mod academia_export;
 mod auth;
 mod commands;
 mod db;
@@ -45,6 +47,40 @@ pub fn run() {
       praxis::list_drafts,
       praxis::create_draft,
       praxis::update_draft_content,
+      academia::list_projects,
+      academia::get_project,
+      academia::create_project,
+      academia::list_sources,
+      academia::create_source,
+      academia::import_source,
+      academia::list_notes,
+      academia::get_note,
+      academia::create_note,
+      academia::update_note,
+      academia::list_backlinks,
+      academia::list_chapters,
+      academia::create_chapter,
+      academia::update_chapter_content,
+      academia::list_tasks,
+      academia::create_task,
+      academia::complete_task,
+      academia::list_milestones,
+      academia::create_milestone,
+      academia::list_activity,
+      academia::list_outline,
+      academia::create_outline_node,
+      academia::list_argument_points,
+      academia::create_argument_point,
+      academia::link_argument_source,
+      academia::unlink_argument_source,
+      academia::list_theses,
+      academia::create_thesis,
+      academia::list_thesis_points,
+      academia::add_thesis_point,
+      academia::list_quotes,
+      academia::create_quote,
+      academia_export::export_chapters_markdown,
+      academia_export::export_chapters_docx,
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

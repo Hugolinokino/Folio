@@ -8,6 +8,8 @@ const MIGRATIONS: &[(i32, &str)] = &[
     (1, include_str!("../../Database/migrations/0001_initial.sql")),
     (2, include_str!("../../Database/migrations/0002_praxis_extensions.sql")),
     (3, include_str!("../../Database/migrations/0003_document_date.sql")),
+    (4, include_str!("../../Database/migrations/0004_academia_writing.sql")),
+    (5, include_str!("../../Database/migrations/0005_academia_boards.sql")),
 ];
 
 pub fn db_path(app_data_dir: &Path) -> PathBuf {

@@ -1,12 +1,5 @@
 import { titleOf, type Vorhaben } from './types';
-
-function download(name: string, text: string, mime: string) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-}
+import { download } from '../download';
 
 export function exportJson(d: Vorhaben) {
   download('strategy-hub-export.json', JSON.stringify(d, null, 2), 'application/json');

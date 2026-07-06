@@ -30,3 +30,4 @@ rand = "0.8"
 hex = "0.4"
 uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
+docx-rs = "0.4.20"

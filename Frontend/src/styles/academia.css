@@ -1,0 +1,12 @@
+/* Academia — Wikilinks in Notizen/Kapiteln */
+.ilink {
+  color: var(--accent);
+  cursor: pointer;
+  border-bottom: 1px solid color-mix(in oklch, var(--accent) 40%, transparent);
+}
+.ilink:hover { border-bottom-color: var(--accent); }
+.ilink.unresolved {
+  color: var(--ink-4);
+  border-bottom-style: dashed;
+}
+.ilink.unresolved:hover { color: var(--ink-2); }
