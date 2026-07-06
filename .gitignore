@@ -1,0 +1,23 @@
+.DS_Store
+.claude/
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Rust / Backend
+Backend/target/
+Backend/gen/schemas/
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# Local DB / secrets (should never live in the repo)
+*.sqlite*
+*.db
+.env*

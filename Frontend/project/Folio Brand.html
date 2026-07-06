@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Folio — Brand DNA</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232f49d8'/%3E%3Cg stroke='white' stroke-width='1.9' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 4h7l4 4v12H7z'/%3E%3Cpath d='M14 4v4h4'/%3E%3Cpath d='M10 13h5M10 16h5'/%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="brand.css" />
+</head>
+<body>
+  <!-- reusable folio mark template -->
+  <template id="folio-tpl">
+    <svg class="folio-mark" viewBox="0 0 64 64" stroke-width="2.6" style="--len-sheet:160; --len-margin:36; --fold-origin:100% 0%;">
+      <path class="sheet"  d="M16 9 H39 L51 21 V55 H16 Z" />
+      <path class="margin" d="M23 16 V49" />
+      <path class="fold"   d="M39 9 V21 H51" />
+      <path class="line l1" d="M28 25 H46" />
+      <path class="line l2" d="M28 33 H43" />
+      <path class="line l3" d="M28 41 H39" />
+    </svg>
+  </template>
+
+  <div class="wrap">
+    <!-- ============ TOP NAV ============ -->
+    <nav class="topnav">
+      <span class="brand-mini">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9">
+          <rect width="24" height="24" rx="6" fill="#2f49d8"/>
+          <path d="M7 4h7l4 4v12H7z" stroke="#fff"/>
+          <path d="M14 4v4h4" stroke="#fff"/>
+          <path d="M10 13h5M10 16h5" stroke="#fff"/>
+        </svg>
+        <span class="wm">Folio<span class="d">.</span></span>
+      </span>
+      <span class="links">
+        <a href="#idee">Idee</a>
+        <a href="#zeichen">Zeichen</a>
+        <a href="#farbe">Farbe</a>
+        <a href="#schrift">Schrift</a>
+        <a href="#bewegung">Bewegung</a>
+        <a href="#icons">Icons</a>
+        <a href="#stimme">Stimme</a>
+      </span>
+    </nav>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="mark-stage" id="heroMark">
+        <svg class="folio-mark anim" id="heroSvg" width="156" height="156" viewBox="0 0 64 64" stroke-width="2.6" style="--len-sheet:160; --len-margin:36; --fold-origin:100% 0%;">
+          <path class="sheet"  d="M16 9 H39 L51 21 V55 H16 Z" />
+          <path class="margin" d="M23 16 V49" />
+          <path class="fold"   d="M39 9 V21 H51" />
+          <path class="line l1" d="M28 25 H46" />
+          <path class="line l2" d="M28 33 H43" />
+          <path class="line l3" d="M28 41 H39" />
+        </svg>
+      </div>
+      <h1 class="wordmark">Folio<span class="d">.</span></h1>
+      <p class="tagline">Juristische Forschung — vom Blatt bis zur Abgabe.</p>
+      <p class="sub">Brand DNA · v1.0</p>
+      <button class="replay" id="replay">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>
+        Animation abspielen
+      </button>
+    </header>
+
+    <div class="divider"></div>
+
+    <!-- ============ IDEE ============ -->
+    <section id="idee" class="idea reveal">
+      <div class="sec-head">
+        <span class="sec-num">01</span>
+        <div>
+          <div class="sec-kicker">Die Idee</div>
+          <h2 class="sec-title">Das gefaltete Blatt.</h2>
+        </div>
+      </div>
+      <p class="big">Folio bringt Recherche, Quellen und Argument auf <em>ein Blatt</em> — von der ersten Notiz bis zur gebundenen Arbeit.</p>
+      <div class="idea-cols">
+        <div>
+          <div class="k">Herkunft</div>
+          <p>Das <em>Folio</em> ist der gefaltete Bogen der Buchbinderei — die Grundeinheit jedes gedruckten Werks. Es trägt die Seitenzahl, ordnet das Wissen, hält die Arbeit zusammen. Folio übersetzt diese Jahrhunderte alte Geste der Gelehrsamkeit in einen Arbeitsplatz für das Schweizer Recht.</p>
+        </div>
+        <div>
+          <div class="k">Das Versprechen</div>
+          <p>Kein leeres Blatt, das einschüchtert — sondern eines, das mitdenkt: das Quellen erfasst, Belege bereithält und die Argumentationslinie sichtbar macht. Struktur für die langsame, präzise Arbeit, die eine juristische Schrift verlangt.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ PERSÖNLICHKEIT ============ -->
+    <section class="reveal">
+      <div class="sec-head">
+        <span class="sec-num">02</span>
+        <div>
+          <div class="sec-kicker">Persönlichkeit</div>
+          <h2 class="sec-title">Gelehrt, nicht akademisch verstaubt.</h2>
+        </div>
+      </div>
+      <div class="traits">
+        <div class="trait">
+          <div class="t-n">01</div>
+          <div class="t-w">Präzise</div>
+          <div class="t-d">Jedes Wort sitzt, jede Quelle ist belegt. Folio formuliert wie ein gutes Gutachten — exakt und nachprüfbar.</div>
+          <div class="t-anti">nicht <s>ungefähr</s></div>
+        </div>
+        <div class="trait">
+          <div class="t-n">02</div>
+          <div class="t-w">Ruhig</div>
+          <div class="t-d">Keine Banner, keine Dringlichkeit. Die Oberfläche tritt zurück, damit das Denken in den Vordergrund tritt.</div>
+          <div class="t-anti">nicht <s>laut</s></div>
+        </div>
+        <div class="trait">
+          <div class="t-n">03</div>
+          <div class="t-w">Gründlich</div>
+          <div class="t-d">Vom Leiturteil bis zur Fussnote. Folio belohnt Tiefe statt Tempo und verliert keinen Beleg.</div>
+          <div class="t-anti">nicht <s>oberflächlich</s></div>
+        </div>
+        <div class="trait">
+          <div class="t-n">04</div>
+          <div class="t-w">Schweizerisch</div>
+          <div class="t-d">Genauigkeit als Haltung — Forstmoser-Zitierweise, BGE-Logik, ss statt ß. Verlässlich bis ins Detail.</div>
+          <div class="t-anti">nicht <s>beliebig</s></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ DAS ZEICHEN ============ -->
+    <section id="zeichen" class="reveal">
+      <div class="sec-head">
+        <span class="sec-num">03</span>
+        <div>
+          <div class="sec-kicker">Das Zeichen</div>
+          <h2 class="sec-title">Eselsohr &amp; Marginalie.</h2>
+        </div>
+      </div>
+      <p class="sec-lede">Zwei Gesten der Gelehrsamkeit bilden das Mal: das <strong>Eselsohr</strong> der gefalteten Ecke und die <strong>Marginalie</strong> — die indigofarbene Randlinie, an der gedacht und belegt wird. Beide kehren im gesamten Icon-Set wieder.</p>
+
+      <div class="mark-grid" style="margin-top:40px;">
+        <div class="panel">
+          <div class="p-body construct">
+            <div class="grid-bg"></div>
+            <svg class="folio-mark" width="180" height="180" viewBox="0 0 64 64" stroke-width="2.4" style="position:relative;">
+              <path class="sheet"  d="M16 9 H39 L51 21 V55 H16 Z" />
+              <path class="margin" d="M23 16 V49" />
+              <path class="fold"   d="M39 9 V21 H51" />
+              <path class="line l1" d="M28 25 H46" />
+              <path class="line l2" d="M28 33 H43" />
+              <path class="line l3" d="M28 41 H39" />
+            </svg>
+          </div>
+          <div class="p-foot"><span class="pl">Konstruktion auf 16-px-Raster</span><span class="pc">Primärmarke</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="p-body">
+            <div class="variant-row">
+              <div class="chip-mark solid">
+                <svg class="folio-mark" width="46" height="46" viewBox="0 0 64 64" stroke-width="2.8"><path class="sheet" d="M16 9 H39 L51 21 V55 H16 Z"/><path class="margin" d="M23 16 V49"/><path class="fold" d="M39 9 V21 H51"/><path class="line l1" d="M28 25 H46"/><path class="line l2" d="M28 33 H43"/><path class="line l3" d="M28 41 H39"/></svg>
+              </div>
+              <div class="chip-mark ghost">
+                <svg class="folio-mark" width="46" height="46" viewBox="0 0 64 64" stroke-width="2.8"><path class="sheet" d="M16 9 H39 L51 21 V55 H16 Z"/><path class="margin" d="M23 16 V49"/><path class="fold" d="M39 9 V21 H51"/><path class="line l1" d="M28 25 H46"/><path class="line l2" d="M28 33 H43"/><path class="line l3" d="M28 41 H39"/></svg>
+              </div>
+              <div class="chip-mark paper">
+                <svg class="folio-mark" width="46" height="46" viewBox="0 0 64 64" stroke-width="2.8"><path class="sheet" d="M16 9 H39 L51 21 V55 H16 Z"/><path class="margin" d="M23 16 V49"/><path class="fold" d="M39 9 V21 H51"/><path class="line l1" d="M28 25 H46"/><path class="line l2" d="M28 33 H43"/><path class="line l3" d="M28 41 H39"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="p-foot"><span class="pl">Voll · Kontur · Papier — fahre über die Marke</span><span class="pc">Varianten</span></div>
+        </div>
+      </div>
+
+      <div class="mark-grid" style="margin-top:24px;">
+        <div class="panel">
+          <div class="p-body" style="min-height:150px;">
+            <div style="display:flex; align-items:baseline; gap:0;">
+              <span style="font-family:var(--serif); font-size:64px; font-weight:500; letter-spacing:-0.02em;">Folio<span style="color:var(--indigo-lite);">.</span></span>
+            </div>
+          </div>
+          <div class="p-foot"><span class="pl">Wortmarke · EB Garamond Medium, Punkt in Indigo</span><span class="pc">Lockup</span></div>
+        </div>
+        <div class="panel">
+          <div class="p-body" style="min-height:150px;">
+            <span class="clearspace-note">Schutzraum = Höhe des Eselsohrs · Mindestgrösse Mal 20 px · Wortmarke 14 px</span>
+          </div>
+          <div class="p-foot"><span class="pl">Schutzraum &amp; Mindestgrössen</span><span class="pc">Regeln</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ FARBE ============ -->
+    <section id="farbe" class="reveal">
+      <div class="sec-head">
+        <span class="sec-num">04</span>
+        <div>
+          <div class="sec-kicker">Farbe</div>
+          <h2 class="sec-title">Tinte, Papier, ein Indigo.</h2>
+        </div>
+      </div>
+      <p class="sec-lede">Eine monochrome Basis aus Schwarz und Weiss, getragen von einem einzigen Akzent: <strong>Folio Indigo</strong>. Keine zweite Farbe konkurriert um Aufmerksamkeit.</p>
+      <div class="swatches" style="margin-top:40px;">
+        <div class="swatch"><div class="chip" style="background:#2f49d8;"></div><div class="meta"><div class="nm">Folio Indigo</div><div class="hx">#2F49D8</div><div class="role">Primärakzent</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#6f86ff;"></div><div class="meta"><div class="nm">Indigo Hell</div><div class="hx">#6F86FF</div><div class="role">Akzent · Dunkel-UI</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#0b0d13;"></div><div class="meta"><div class="nm">Nachtblau</div><div class="hx">#0B0D13</div><div class="role">Grund · Dunkel</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#14161b;"></div><div class="meta"><div class="nm">Tinte</div><div class="hx">#14161B</div><div class="role">Text · Hell</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#ffffff;"></div><div class="meta"><div class="nm">Papier</div><div class="hx">#FFFFFF</div><div class="role">Grund · Hell</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#f4f5f8;"></div><div class="meta"><div class="nm">Nebel</div><div class="hx">#F4F5F8</div><div class="role">Fläche · Hell</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#565b64;"></div><div class="meta"><div class="nm">Schiefer</div><div class="hx">#565B64</div><div class="role">Sekundärtext</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#888d97;"></div><div class="meta"><div class="nm">Asche</div><div class="hx">#888D97</div><div class="role">Marginalie · Meta</div></div></div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ SCHRIFT ============ -->
+    <section id="schrift" class="reveal">
+      <div class="sec-head">
+        <span class="sec-num">05</span>
+        <div>
+          <div class="sec-kicker">Schrift</div>
+          <h2 class="sec-title">Drei Stimmen, eine Haltung.</h2>
+        </div>
+      </div>
+      <div class="type-rows">
+        <div class="type-row">
+          <div class="tr-meta"><div class="fam">EB Garamond</div><div class="role">Titel &amp; gelehrte Stimme. Trägt Namen, Überschriften und prägnante Sätze.</div></div>
+          <div class="spec-serif">Persönliche Freiheit<span class="small">ABCDEFG abcdefg 0123 · Art. 10 BV — der Kerngehalt</span></div>
+        </div>
+        <div class="type-row">
+          <div class="tr-meta"><div class="fam">DM Sans</div><div class="role">Interface &amp; Fliesstext. Klar, neutral, gut lesbar in jeder Grösse.</div></div>
+          <div class="spec-sans"><div class="a">Quelle hochladen</div><div class="b">PDF, BGE oder Aufsatz — wird automatisch erfasst, indexiert und zitierfähig gemacht. Sechs Datenbanken in einem Fenster.</div></div>
+        </div>
+        <div class="type-row">
+          <div class="tr-meta"><div class="fam">DM Mono</div><div class="role">Marginalien, Etiketten, Zitate. Das technische Register am Rand.</div></div>
+          <div class="spec-mono">BGE 137 I 16 <span class="dim">· E. 3.2 · 2010</span><br>#leiturteil <span class="dim">#kerngehalt</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ BEWEGUNG ============ -->
+    <section id="bewegung" class="reveal">
+      <div class="sec-head">
+        <span class="sec-num">06</span>
+        <div>
+          <div class="sec-kicker">Bewegung</div>
+          <h2 class="sec-title">Die Faltung.</h2>
+        </div>
+      </div>
+      <p class="sec-lede">Alles tritt ein, als würde ein Blatt umgeschlagen: Linien <strong>schreiben</strong> sich, das Eselsohr <strong>faltet</strong> sich, die Marginalie <strong>zieht</strong> von oben. Eine Geste, ein Easing — <span style="font-family:var(--mono); color:var(--tx-2);">cubic-bezier(.16,1,.3,1)</span>, ~600 ms.</p>
+      <div class="motion-grid" style="margin-top:40px;">
+        <div class="motion-card" data-motion="write">
+          <div class="mc-stage">
+            <svg width="92" height="92" viewBox="0 0 64 64" stroke-width="2.6" class="m-demo">
+              <path class="sheet" style="stroke:var(--tx-1); fill:none; stroke-linecap:round; stroke-linejoin:round;" d="M16 9 H39 L51 21 V55 H16 Z"/>
+              <path class="dline" style="stroke:var(--tx-2); fill:none; stroke-linecap:round;" d="M24 26 H44"/>
+              <path class="dline" style="stroke:var(--tx-2); fill:none; stroke-linecap:round;" d="M24 34 H44"/>
+              <path class="dline" style="stroke:var(--tx-2); fill:none; stroke-linecap:round;" d="M24 42 H38"/>
+            </svg>
+          </div>
+          <div class="mc-t">Schreiben</div>
+          <div class="mc-d">Inhalt erscheint zeilenweise, von links — wie geschrieben, nicht eingeblendet.</div>
+          <div class="mc-c">scaleX 0 → 1 · gestaffelt</div>
+        </div>
+        <div class="motion-card" data-motion="fold">
+          <div class="mc-stage">
+            <svg width="92" height="92" viewBox="0 0 64 64" stroke-width="2.6" class="m-demo">
+              <path class="sheet" style="stroke:var(--tx-1); fill:none; stroke-linecap:round; stroke-linejoin:round;" d="M16 9 H39 L51 21 V55 H16 Z"/>
+              <path class="dfold" style="stroke:var(--indigo-lite); fill:none; stroke-linecap:round; stroke-linejoin:round; transform-box:fill-box; transform-origin:100% 0%;" d="M39 9 V21 H51"/>
+            </svg>
+          </div>
+          <div class="mc-t">Falten</div>
+          <div class="mc-d">Das Eselsohr klappt aus seiner Ecke ein — die Signaturgeste der Marke.</div>
+          <div class="mc-c">rotate −58° → 0°</div>
+        </div>
+        <div class="motion-card" data-motion="rule">
+          <div class="mc-stage">
+            <svg width="92" height="92" viewBox="0 0 64 64" stroke-width="2.6" class="m-demo">
+              <path class="sheet" style="stroke:var(--tx-1); fill:none; stroke-linecap:round; stroke-linejoin:round;" d="M16 9 H39 L51 21 V55 H16 Z"/>
+              <path class="drule" style="stroke:var(--indigo-lite); fill:none; stroke-linecap:round;" d="M23 16 V49"/>
+            </svg>
+          </div>
+          <div class="mc-t">Ziehen</div>
+          <div class="mc-d">Die Marginalie zieht sich von oben nach unten — der Rand, an dem gedacht wird.</div>
+          <div class="mc-c">dashoffset → 0</div>
+        </div>
+      </div>
+      <p class="clearspace-note" style="margin-top:18px;">Auf eine Karte klicken zum Abspielen. Bei <span style="font-family:var(--mono);">prefers-reduced-motion</span> erscheint stets der Endzustand.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ ICONS ============ -->
+    <section id="icons" class="reveal">
+      <div class="sec-head">
+        <span class="sec-num">07</span>
+        <div>
+          <div class="sec-kicker">Iconografie</div>
+          <h2 class="sec-title">Eine Familie, ein Strich.</h2>
+        </div>
+      </div>
+      <p class="sec-lede">24-px-Raster, 1,8-px-Strich, runde Enden. Wo es passt, trägt jedes Icon das Eselsohr oder die indigofarbene Marginalie — so gehören sie sichtbar zur Marke. Fahre über ein Icon.</p>
+      <div class="icon-grid" id="iconGrid" style="margin-top:36px;"></div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ STIMME ============ -->
+    <section id="stimme" class="reveal">
+      <div class="sec-head">
+        <span class="sec-num">08</span>
+        <div>
+          <div class="sec-kicker">Stimme &amp; Ton</div>
+          <h2 class="sec-title">Belegt, nicht behauptet.</h2>
+        </div>
+      </div>
+      <div class="voice-grid">
+        <div class="voice-card say">
+          <div class="vh">So klingt Folio</div>
+          <div class="voice-line"><span class="mk">✓</span><span class="tx">„47 Quellen · 23 Notizen · nächste Abgabe 15. Aug."</span></div>
+          <div class="voice-line"><span class="mk">✓</span><span class="tx">„Quelle erfasst — zitierfähig nach Forstmoser."</span></div>
+          <div class="voice-line"><span class="mk">✓</span><span class="tx">„Diese These ist noch unbelegt. Beleg verknüpfen?"</span></div>
+        </div>
+        <div class="voice-card dont">
+          <div class="vh">So nicht</div>
+          <div class="voice-line"><span class="mk">✕</span><span class="tx">„Dein smarter KI-Workspace für müheloses Arbeiten! 🚀"</span></div>
+          <div class="voice-line"><span class="mk">✕</span><span class="tx">„Wow — Quelle erfolgreich hinzugefügt!"</span></div>
+          <div class="voice-line"><span class="mk">✕</span><span class="tx">„Ein ruhiger Ort für die langsame Arbeit des Denkens."</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ ANWENDUNG ============ -->
+    <section class="reveal tight">
+      <div class="sec-head">
+        <span class="sec-num">09</span>
+        <div>
+          <div class="sec-kicker">Anwendung</div>
+          <h2 class="sec-title">Im Gebrauch.</h2>
+        </div>
+      </div>
+      <div class="app-grid" style="margin-top:30px;">
+        <div class="app-card">
+          <div class="ac-body">
+            <div class="fav">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4"/><path d="M10 13h5M10 16h5"/></svg>
+            </div>
+          </div>
+          <div class="ac-foot">App-Icon / Favicon</div>
+        </div>
+        <div class="app-card">
+          <div class="ac-body">
+            <div class="side-lockup">
+              <div class="row">
+                <span class="sq"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4"/><path d="M10 13h5M10 16h5"/></svg></span>
+                <span class="wm">Folio<span class="d">.</span></span>
+                <span class="bdg">Beta</span>
+              </div>
+            </div>
+          </div>
+          <div class="ac-foot">Sidebar-Lockup</div>
+        </div>
+        <div class="app-card">
+          <div class="ac-body">
+            <div class="tab-mock">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect width="24" height="24" rx="6" fill="#2f49d8"/><path d="M7 4h7l4 4v12H7z" stroke="#fff"/><path d="M14 4v4h4" stroke="#fff"/><path d="M10 13h5M10 16h5" stroke="#fff"/></svg>
+              <span class="tt">Folio — Juristische Forschung</span>
+            </div>
+          </div>
+          <div class="ac-foot">Browser-Tab</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FOOTER ============ -->
+    <footer>
+      <div class="fm">Folio<span class="d">.</span></div>
+      <div class="fc">Brand DNA · 2026 · vom Blatt bis zur Abgabe</div>
+    </footer>
+  </div>
+
+  <script src="brand.js"></script>
+</body>
+</html>
