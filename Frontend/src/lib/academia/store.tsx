@@ -81,9 +81,18 @@ export function useProjectWorkspace(projectId: string | null) {
 
   useEffect(() => { reload(); }, [reload]);
 
-  const addSource = async (type: string, citationKey: string, title: string, author: string, year: number | null, annotation: string) => {
+  const addSource = async (
+    type: string,
+    citationKey: string,
+    title: string,
+    author: string,
+    year: number | null,
+    annotation: string,
+    edition = '',
+    place = '',
+  ) => {
     if (!projectId) return;
-    await academiaApi.createSource(projectId, type, citationKey, title, author, year, annotation);
+    await academiaApi.createSource(projectId, type, citationKey, title, author, year, annotation, edition, place);
     await reload();
   };
 
@@ -100,6 +109,11 @@ export function useProjectWorkspace(projectId: string | null) {
     await reload();
   };
 
+  const deleteSource = async (sourceId: string) => {
+    await academiaApi.deleteSource(sourceId);
+    await reload();
+  };
+
   const addNote = async (title: string) => {
     if (!projectId) return null;
     const note = await academiaApi.createNote(projectId, title);
@@ -111,6 +125,11 @@ export function useProjectWorkspace(projectId: string | null) {
     await academiaApi.updateNote(noteId, content, tags);
   };
 
+  const deleteNote = async (noteId: string) => {
+    await academiaApi.deleteNote(noteId);
+    await reload();
+  };
+
   const addChapter = async (title: string) => {
     if (!projectId) return null;
     const chapter = await academiaApi.createChapter(projectId, title);
@@ -120,6 +139,11 @@ export function useProjectWorkspace(projectId: string | null) {
 
   const updateChapterContent = async (chapterId: string, content: string) => {
     await academiaApi.updateChapterContent(chapterId, content);
+  };
+
+  const deleteChapter = async (chapterId: string) => {
+    await academiaApi.deleteChapter(chapterId);
+    await reload();
   };
 
   const exportMarkdown = async () => {
@@ -147,10 +171,13 @@ export function useProjectWorkspace(projectId: string | null) {
     reload,
     addSource,
     importSource,
+    deleteSource,
     addNote,
     updateNoteContent,
+    deleteNote,
     addChapter,
     updateChapterContent,
+    deleteChapter,
     exportMarkdown,
     exportDocx,
   };
@@ -190,13 +217,18 @@ export function useProjectBoard(projectId: string | null) {
     await reload();
   };
 
+  const deleteTask = async (taskId: string) => {
+    await academiaApi.deleteTask(taskId);
+    await reload();
+  };
+
   const addMilestone = async (title: string, targetDate: string) => {
     if (!projectId) return;
     await academiaApi.createMilestone(projectId, title, targetDate);
     await reload();
   };
 
-  return { tasks, milestones, activity, loading, reload, addTask, completeTask, addMilestone };
+  return { tasks, milestones, activity, loading, reload, addTask, completeTask, deleteTask, addMilestone };
 }
 
 /** Gliederung — outline tree + per-node Argumentationslinie, with a real (source-count-based) Lücken-Check. */
@@ -237,7 +269,12 @@ export function useOutline(projectId: string | null) {
     await reload();
   };
 
-  return { nodes, points, loading, reload, addNode, addArgument, linkSource, unlinkSource };
+  const deleteNode = async (nodeId: string) => {
+    await academiaApi.deleteOutlineNode(nodeId);
+    await reload();
+  };
+
+  return { nodes, points, loading, reload, addNode, addArgument, linkSource, unlinkSource, deleteNode };
 }
 
 /** Thesen — claim + pro/con points. */
@@ -268,7 +305,12 @@ export function useTheses(projectId: string | null) {
     await reload();
   };
 
-  return { theses, points, loading, reload, addThesis, addPoint };
+  const deleteThesis = async (thesisId: string) => {
+    await academiaApi.deleteThesis(thesisId);
+    await reload();
+  };
+
+  return { theses, points, loading, reload, addThesis, addPoint, deleteThesis };
 }
 
 /** Zitate — quote clusters tied to sources. */
@@ -291,5 +333,10 @@ export function useQuotes(projectId: string | null) {
     await reload();
   };
 
-  return { quotes, loading, reload, addQuote };
+  const deleteQuote = async (quoteId: string) => {
+    await academiaApi.deleteQuote(quoteId);
+    await reload();
+  };
+
+  return { quotes, loading, reload, addQuote, deleteQuote };
 }

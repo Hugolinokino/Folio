@@ -10,6 +10,7 @@ const MIGRATIONS: &[(i32, &str)] = &[
     (3, include_str!("../../Database/migrations/0003_document_date.sql")),
     (4, include_str!("../../Database/migrations/0004_academia_writing.sql")),
     (5, include_str!("../../Database/migrations/0005_academia_boards.sql")),
+    (6, include_str!("../../Database/migrations/0006_source_details.sql")),
 ];
 
 pub fn db_path(app_data_dir: &Path) -> PathBuf {
@@ -23,6 +24,11 @@ pub fn open_and_key(path: &Path, key_hex: &str) -> rusqlite::Result<Connection> 
     let conn = Connection::open(path)?;
     conn.pragma_update(None, "key", format!("x'{key_hex}'"))?;
     conn.query_row("SELECT count(*) FROM sqlite_master", [], |row| row.get::<_, i64>(0))?;
+    // Per-connection pragma: the `PRAGMA foreign_keys = ON` in migration 0001
+    // only covered the connection that ran it. Without this, every later app
+    // start silently loses FK enforcement — and with it all ON DELETE CASCADE
+    // behaviour the schema relies on.
+    conn.pragma_update(None, "foreign_keys", "ON")?;
     Ok(conn)
 }
 

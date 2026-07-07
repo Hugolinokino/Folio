@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { Icon } from '../../components/Icon';
 import { useQuotes } from '../../lib/academia/store';
 import type { QuoteDto, SourceDto } from '../../lib/academia/api';
 
 export function Zitate({ projectId, sources }: { projectId: string; sources: SourceDto[] }) {
-  const { quotes, loading, addQuote } = useQuotes(projectId);
+  const { quotes, loading, addQuote, deleteQuote } = useQuotes(projectId);
   const [clusterFilter, setClusterFilter] = useState<string | null>(null);
   const [form, setForm] = useState({ sourceId: '', text: '', cluster: '', tag: '' });
 
@@ -32,6 +33,11 @@ export function Zitate({ projectId, sources }: { projectId: string; sources: Sou
     if (!form.sourceId || !form.text.trim()) return;
     addQuote(form.sourceId, form.text.trim(), form.cluster.trim(), form.tag.trim());
     setForm((f) => ({ ...f, text: '', tag: '' }));
+  };
+
+  const handleDelete = async (quoteId: string) => {
+    const ok = await confirm('Zitat unwiderruflich löschen?', { title: 'Zitat löschen', kind: 'warning' });
+    if (ok) await deleteQuote(quoteId);
   };
 
   if (loading) {
@@ -93,6 +99,7 @@ export function Zitate({ projectId, sources }: { projectId: string; sources: Sou
                         {q.tag && (
                           <div className="q-tags"><span className="chip" style={{ height: 22, fontSize: 9.5 }}>{q.tag}</span></div>
                         )}
+                        <button className="ab danger" title="Zitat löschen" onClick={() => handleDelete(q.id)}><Icon name="close" size={12} /></button>
                       </div>
                     </div>
                   );

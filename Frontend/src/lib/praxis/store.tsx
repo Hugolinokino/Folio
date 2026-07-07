@@ -254,6 +254,11 @@ export function useCaseWorkspace(caseId: string | null) {
     await reload();
   };
 
+  const deleteDocument = async (documentId: string) => {
+    await praxisApi.deleteDocument(documentId);
+    await reload();
+  };
+
   const clusterDocuments = async (onProgress?: (msg: string) => void) => {
     if (!caseId || !fall) return null;
     const k = await runClusters(caseId, fall.akten, onProgress);
@@ -274,6 +279,7 @@ export function useCaseWorkspace(caseId: string | null) {
     addDraft,
     updateDraftContent,
     uploadDocument,
+    deleteDocument,
     clusterDocuments,
   };
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { Icon } from '../../components/Icon';
 import { useTheses } from '../../lib/academia/store';
 import type { SourceDto } from '../../lib/academia/api';
@@ -10,7 +11,7 @@ interface PointDraft {
 }
 
 export function Thesen({ projectId, sources }: { projectId: string; sources: SourceDto[] }) {
-  const { theses, points, loading, addThesis, addPoint } = useTheses(projectId);
+  const { theses, points, loading, addThesis, addPoint, deleteThesis } = useTheses(projectId);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ claim: '', summary: '', position: '' });
   const [pointDrafts, setPointDrafts] = useState<Record<string, PointDraft>>({});
@@ -20,6 +21,11 @@ export function Thesen({ projectId, sources }: { projectId: string; sources: Sou
     addThesis(form.claim.trim(), form.summary.trim(), form.position.trim());
     setForm({ claim: '', summary: '', position: '' });
     setAdding(false);
+  };
+
+  const handleDelete = async (thesisId: string, claim: string) => {
+    const ok = await confirm(`These "${claim}" unwiderruflich löschen?`, { title: 'These löschen', kind: 'warning' });
+    if (ok) await deleteThesis(thesisId);
   };
 
   const draftFor = (thesisId: string): PointDraft => pointDrafts[thesisId] || { side: 'pro', text: '', sourceId: '' };
@@ -64,7 +70,10 @@ export function Thesen({ projectId, sources }: { projectId: string; sources: Sou
                 <div key={th.id} className="thesis-card" style={{ padding: 16 }}>
                   <div className="th-head">
                     <span className="th-num">These {String(i + 1).padStart(2, '0')}</span>
-                    {th.position && <span className="t-mono-sm">{th.position}</span>}
+                    <span className="row-flex" style={{ gap: 6 }}>
+                      {th.position && <span className="t-mono-sm">{th.position}</span>}
+                      <button className="ab danger" title="These löschen" onClick={() => handleDelete(th.id, th.claim)}><Icon name="close" size={12} /></button>
+                    </span>
                   </div>
                   <div className="th-title">{th.claim}</div>
                   {th.summary && <div className="th-body">{th.summary}</div>}

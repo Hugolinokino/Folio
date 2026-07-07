@@ -135,6 +135,7 @@ export const praxisApi = {
     pages: number | null,
     docDate: string,
   ) => invoke<DocumentDto>('import_document', { caseId, sourcePath, nr, title, sender, docType, folder, content, pages, docDate }),
+  deleteDocument: (documentId: string) => invoke<void>('delete_document', { documentId }),
   updateDocumentEmbedding: (documentId: string, embedding: number[]) =>
     invoke<void>('update_document_embedding', { documentId, embedding }),
   listDocumentEmbeddings: (caseId: string) => invoke<DocumentEmbeddingDto[]>('list_document_embeddings', { caseId }),

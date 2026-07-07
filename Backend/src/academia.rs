@@ -143,9 +143,11 @@ pub struct Source {
     annotation: Option<String>,
     file_path: Option<String>,
     content: Option<String>,
+    edition: Option<String>,
+    place: Option<String>,
 }
 
-const SOURCE_COLS: &str = "id, project_id, type, citation_key, title, author, year, annotation, file_path, content";
+const SOURCE_COLS: &str = "id, project_id, type, citation_key, title, author, year, annotation, file_path, content, edition, place";
 
 fn row_to_source(row: &rusqlite::Row) -> rusqlite::Result<Source> {
     Ok(Source {
@@ -159,6 +161,8 @@ fn row_to_source(row: &rusqlite::Row) -> rusqlite::Result<Source> {
         annotation: row.get(7)?,
         file_path: row.get(8)?,
         content: row.get(9)?,
+        edition: row.get(10)?,
+        place: row.get(11)?,
     })
 }
 
@@ -186,14 +190,16 @@ pub fn create_source(
     author: String,
     year: Option<i64>,
     annotation: String,
+    edition: String,
+    place: String,
 ) -> Result<Source, String> {
     let guard = state.conn.lock().unwrap();
     let conn = guard.as_ref().ok_or("Workspace is locked.")?;
     let id = format!("src-{}", uuid::Uuid::new_v4());
     conn.execute(
-        "INSERT INTO sources (id, project_id, type, citation_key, title, author, year, annotation) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-        rusqlite::params![id, project_id, r#type, citation_key, title, author, year, annotation],
+        "INSERT INTO sources (id, project_id, type, citation_key, title, author, year, annotation, edition, place) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+        rusqlite::params![id, project_id, r#type, citation_key, title, author, year, annotation, edition, place],
     )
     .map_err(|e| e.to_string())?;
     log_activity(conn, &project_id, &format!("Quelle \"{title}\" hinzugefügt")).map_err(|e| e.to_string())?;
@@ -208,7 +214,35 @@ pub fn create_source(
         annotation: Some(annotation),
         file_path: None,
         content: None,
+        edition: Some(edition),
+        place: Some(place),
     })
+}
+
+/// Deletes a source together with its stored PDF (best effort). Quote and
+/// argument links cascade; thesis points keep their text but lose the source
+/// reference (no cascade defined there — nulled explicitly so the FK doesn't
+/// block the delete).
+#[tauri::command]
+pub fn delete_source(state: tauri::State<AppState>, source_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    let (project_id, title, file_path): (String, String, Option<String>) = conn
+        .query_row(
+            "SELECT project_id, title, file_path FROM sources WHERE id = ?1",
+            rusqlite::params![source_id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .map_err(|e| e.to_string())?;
+    conn.execute("UPDATE thesis_points SET source_id = NULL WHERE source_id = ?1", rusqlite::params![source_id])
+        .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM sources WHERE id = ?1", rusqlite::params![source_id])
+        .map_err(|e| e.to_string())?;
+    if let Some(path) = file_path {
+        let _ = std::fs::remove_file(path);
+    }
+    log_activity(conn, &project_id, &format!("Quelle \"{title}\" gelöscht")).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -225,6 +259,8 @@ pub fn import_source(
     year: Option<i64>,
     annotation: String,
     content: String,
+    edition: String,
+    place: String,
 ) -> Result<Source, String> {
     let dir = app_data_dir(&app)?;
     let ext = std::path::Path::new(&source_path)
@@ -242,9 +278,9 @@ pub fn import_source(
     let guard = state.conn.lock().unwrap();
     let conn = guard.as_ref().ok_or("Workspace is locked.")?;
     conn.execute(
-        "INSERT INTO sources (id, project_id, type, citation_key, title, author, year, annotation, file_path, content) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-        rusqlite::params![source_id, project_id, r#type, citation_key, title, author, year, annotation, dest_path_str, content],
+        "INSERT INTO sources (id, project_id, type, citation_key, title, author, year, annotation, file_path, content, edition, place) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+        rusqlite::params![source_id, project_id, r#type, citation_key, title, author, year, annotation, dest_path_str, content, edition, place],
     )
     .map_err(|e| e.to_string())?;
     log_activity(conn, &project_id, &format!("Quelle \"{title}\" importiert")).map_err(|e| e.to_string())?;
@@ -260,6 +296,8 @@ pub fn import_source(
         annotation: Some(annotation),
         file_path: Some(dest_path_str),
         content: Some(content),
+        edition: Some(edition),
+        place: Some(place),
     })
 }
 
@@ -426,6 +464,20 @@ pub fn list_backlinks(state: tauri::State<AppState>, note_id: String) -> Result<
     rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
 }
 
+/// Deletes a note; its incoming and outgoing `note_links` rows cascade.
+#[tauri::command]
+pub fn delete_note(state: tauri::State<AppState>, note_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    let (project_id, title): (String, String) = conn
+        .query_row("SELECT project_id, title FROM notes WHERE id = ?1", rusqlite::params![note_id], |r| Ok((r.get(0)?, r.get(1)?)))
+        .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM notes WHERE id = ?1", rusqlite::params![note_id])
+        .map_err(|e| e.to_string())?;
+    log_activity(conn, &project_id, &format!("Notiz \"{title}\" gelöscht")).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 // ============================================================
 // Chapters (Schreiben)
 // ============================================================
@@ -493,6 +545,19 @@ pub fn update_chapter_content(state: tauri::State<AppState>, chapter_id: String,
     Ok(())
 }
 
+#[tauri::command]
+pub fn delete_chapter(state: tauri::State<AppState>, chapter_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    let (project_id, title): (String, String) = conn
+        .query_row("SELECT project_id, title FROM chapters WHERE id = ?1", rusqlite::params![chapter_id], |r| Ok((r.get(0)?, r.get(1)?)))
+        .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM chapters WHERE id = ?1", rusqlite::params![chapter_id])
+        .map_err(|e| e.to_string())?;
+    log_activity(conn, &project_id, &format!("Kapitel \"{title}\" gelöscht")).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 // ============================================================
 // Tasks, Milestones & Activity (Projektverwaltung)
 // ============================================================
@@ -552,6 +617,15 @@ pub fn complete_task(state: tauri::State<AppState>, task_id: String) -> Result<(
     conn.execute("UPDATE tasks SET done = 1 WHERE id = ?1", rusqlite::params![task_id])
         .map_err(|e| e.to_string())?;
     log_activity(conn, &project_id, &format!("Aufgabe \"{title}\" erledigt")).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_task(state: tauri::State<AppState>, task_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM tasks WHERE id = ?1", rusqlite::params![task_id])
+        .map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -762,6 +836,17 @@ pub fn unlink_argument_source(state: tauri::State<AppState>, argument_id: String
     Ok(())
 }
 
+/// Deletes an outline node; child nodes, argument points and their source
+/// links all cascade.
+#[tauri::command]
+pub fn delete_outline_node(state: tauri::State<AppState>, node_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM outline_nodes WHERE id = ?1", rusqlite::params![node_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 // ============================================================
 // Thesen — claim + pro/con points
 // ============================================================
@@ -891,6 +976,16 @@ pub fn add_thesis_point(
     Ok(ThesisPoint { id, thesis_id, side, text, source_id, sort_order })
 }
 
+/// Deletes a thesis; its pro/con points cascade.
+#[tauri::command]
+pub fn delete_thesis(state: tauri::State<AppState>, thesis_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM theses WHERE id = ?1", rusqlite::params![thesis_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 // ============================================================
 // Zitate — quote clusters tied to sources
 // ============================================================
@@ -949,6 +1044,15 @@ pub fn create_quote(
     .map_err(|e| e.to_string())?;
     log_activity(conn, &project_id, "Zitat erfasst").map_err(|e| e.to_string())?;
     Ok(Quote { id, project_id, source_id, text, cluster, tag })
+}
+
+#[tauri::command]
+pub fn delete_quote(state: tauri::State<AppState>, quote_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM quotes WHERE id = ?1", rusqlite::params![quote_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -1015,6 +1119,58 @@ mod tests {
         sync_note_links(&conn, "note-a", "proj-1", "No links anymore.").unwrap();
         let link_count_after: i64 = conn.query_row("SELECT count(*) FROM note_links", [], |r| r.get(0)).unwrap();
         assert_eq!(link_count_after, 0);
+
+        drop(conn);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn deleting_a_source_cascades_quotes_and_nulls_thesis_points() {
+        let (conn, path) = open_test_db();
+        conn.execute("INSERT INTO projects (id, title, type, color) VALUES ('proj-1', 'Test', 'Projekt', 'blue')", []).unwrap();
+        conn.execute(
+            "INSERT INTO sources (id, project_id, type, citation_key, title) VALUES ('src-1', 'proj-1', 'BGE', 'BGE 137 I 16', 'X. gegen Y.')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO quotes (id, project_id, source_id, text) VALUES ('quote-1', 'proj-1', 'src-1', 'Zitat')",
+            [],
+        )
+        .unwrap();
+        conn.execute("INSERT INTO theses (id, project_id, claim) VALUES ('thesis-1', 'proj-1', 'These')", []).unwrap();
+        conn.execute(
+            "INSERT INTO thesis_points (id, thesis_id, side, text, source_id) VALUES ('point-1', 'thesis-1', 'pro', 'Beleg', 'src-1')",
+            [],
+        )
+        .unwrap();
+
+        // Same statements delete_source runs, minus tauri::State plumbing.
+        conn.execute("UPDATE thesis_points SET source_id = NULL WHERE source_id = 'src-1'", []).unwrap();
+        conn.execute("DELETE FROM sources WHERE id = 'src-1'", []).unwrap();
+
+        let quotes: i64 = conn.query_row("SELECT count(*) FROM quotes", [], |r| r.get(0)).unwrap();
+        assert_eq!(quotes, 0, "quotes must cascade with their source");
+        let point_source: Option<String> = conn
+            .query_row("SELECT source_id FROM thesis_points WHERE id = 'point-1'", [], |r| r.get(0))
+            .unwrap();
+        assert!(point_source.is_none(), "thesis point keeps its text but loses the source reference");
+
+        drop(conn);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn deleting_a_note_cascades_its_links() {
+        let (conn, path) = open_test_db();
+        conn.execute("INSERT INTO projects (id, title, type, color) VALUES ('proj-1', 'Test', 'Projekt', 'blue')", []).unwrap();
+        conn.execute("INSERT INTO notes (id, project_id, title, content) VALUES ('note-a', 'proj-1', 'A', '')", []).unwrap();
+        conn.execute("INSERT INTO notes (id, project_id, title, content) VALUES ('note-b', 'proj-1', 'B', '')", []).unwrap();
+        conn.execute("INSERT INTO note_links (source_note_id, target_note_id) VALUES ('note-a', 'note-b')", []).unwrap();
+
+        conn.execute("DELETE FROM notes WHERE id = 'note-b'", []).unwrap();
+        let links: i64 = conn.query_row("SELECT count(*) FROM note_links", [], |r| r.get(0)).unwrap();
+        assert_eq!(links, 0, "note_links must cascade when either endpoint is deleted");
 
         drop(conn);
         let _ = std::fs::remove_file(&path);

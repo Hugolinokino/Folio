@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { Icon } from '../../components/Icon';
+import { PdfViewer } from '../../components/PdfViewer';
 import { todayIso } from '../../lib/praxis/format';
 import { useCaseWorkspace } from '../../lib/praxis/store';
 import { semanticSearch, type SearchHit } from '../../lib/praxis/semantic';
-import type { Fall } from '../../lib/praxis/types';
+import type { Akte, Fall } from '../../lib/praxis/types';
 
 type Workspace = ReturnType<typeof useCaseWorkspace>;
 
@@ -68,7 +70,7 @@ export function FallSpace({
       </div>
 
       {tab === 'uebersicht' && <FallUebersicht fall={fall} onOpenWorkbench={onOpenWorkbench} goTab={setTab} addDraft={ws.addDraft} />}
-      {tab === 'akten' && <FallAkten fall={fall} uploadDocument={ws.uploadDocument} clusterDocuments={ws.clusterDocuments} initialAnsicht={initialSub} />}
+      {tab === 'akten' && <FallAkten fall={fall} uploadDocument={ws.uploadDocument} deleteDocument={ws.deleteDocument} clusterDocuments={ws.clusterDocuments} initialAnsicht={initialSub} />}
       {tab === 'fristen' && <FallFristen fall={fall} addFrist={ws.addFrist} completeFrist={ws.completeFrist} />}
       {tab === 'chronologie' && <FallChrono fall={fall} addChronoEvent={ws.addChronoEvent} />}
       {tab === 'korrespondenz' && <FallPost fall={fall} addCorrespondence={ws.addCorrespondence} />}
@@ -211,11 +213,13 @@ const clusterColor = (c: number) => CLUSTER_COLORS[c % CLUSTER_COLORS.length];
 function FallAkten({
   fall,
   uploadDocument,
+  deleteDocument,
   clusterDocuments,
   initialAnsicht,
 }: {
   fall: Fall;
   uploadDocument: Workspace['uploadDocument'];
+  deleteDocument: Workspace['deleteDocument'];
   clusterDocuments: Workspace['clusterDocuments'];
   initialAnsicht?: string;
 }) {
@@ -225,7 +229,13 @@ function FallAkten({
   const [clustering, setClustering] = useState(false);
   const [clusterFilter, setClusterFilter] = useState<number | null>(null);
   const [progress, setProgress] = useState('');
+  const [pdfAkte, setPdfAkte] = useState<Akte | null>(null);
   const ordner = [...new Set(fall.akten.map((a) => a.ordner))];
+
+  const handleDelete = async (a: Akte) => {
+    const ok = await confirm(`Akte "${a.titel}" (${a.nr}) unwiderruflich löschen?`, { title: 'Akte löschen', kind: 'warning' });
+    if (ok) await deleteDocument(a.id);
+  };
 
   const clusterIds = [...new Set(fall.akten.filter((a) => a.clusterId != null).map((a) => a.clusterId as number))].sort((x, y) => x - y);
   const visibleAkten = clusterFilter === null ? fall.akten : fall.akten.filter((a) => a.clusterId === clusterFilter);
@@ -293,7 +303,7 @@ function FallAkten({
       {ansicht === 'verzeichnis' && (
         <div className="panel scroll" style={{ flex: 1, overflow: 'auto', padding: '8px 16px' }}>
           <div className="akt-row akt-head">
-            <span>Nr.</span><span>Datum</span><span>Titel</span><span>Absender</span><span>Typ</span><span style={{ textAlign: 'right' }}>Seiten</span>
+            <span>Nr.</span><span>Datum</span><span>Titel</span><span>Absender</span><span>Typ</span><span style={{ textAlign: 'right' }}>Seiten</span><span></span>
           </div>
           {visibleAkten.map((a, i) => (
             <div key={a.id} className={`akt-row ${sel === i ? 'on' : ''}`} onClick={() => setSel(sel === i ? null : i)}>
@@ -308,9 +318,24 @@ function FallAkten({
               <span className="akt-abs">{a.absender}</span>
               <span><span className="akt-typ">{a.typ}</span></span>
               <span className="akt-seiten">{a.seiten}</span>
+              <span className="akt-actions">
+                {a.filePath && (
+                  <button className="ab" title="PDF anzeigen" onClick={(e) => { e.stopPropagation(); setPdfAkte(a); }}>
+                    <Icon name="eye" size={14} />
+                  </button>
+                )}
+                <button className="ab danger" title="Akte löschen" onClick={(e) => { e.stopPropagation(); handleDelete(a); }}>
+                  <Icon name="close" size={13} />
+                </button>
+              </span>
             </div>
           ))}
+          {visibleAkten.length === 0 && <div className="t-sans-sm" style={{ padding: 8 }}>Keine Akten vorhanden.</div>}
         </div>
+      )}
+
+      {pdfAkte && pdfAkte.filePath && (
+        <PdfViewer filePath={pdfAkte.filePath} title={`${pdfAkte.nr} · ${pdfAkte.titel}`} onClose={() => setPdfAkte(null)} />
       )}
 
       {ansicht === 'ordner' && (

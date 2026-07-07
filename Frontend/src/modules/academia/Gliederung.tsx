@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { Icon } from '../../components/Icon';
 import { useOutline } from '../../lib/academia/store';
 import type { OutlineNodeDto, SourceDto } from '../../lib/academia/api';
@@ -43,7 +44,7 @@ function buildTree(nodes: OutlineNodeDto[]): TreeRow[] {
 }
 
 export function Gliederung({ projectId, sources }: { projectId: string; sources: SourceDto[] }) {
-  const { nodes, points, loading, addNode, addArgument, linkSource, unlinkSource } = useOutline(projectId);
+  const { nodes, points, loading, addNode, addArgument, linkSource, unlinkSource, deleteNode } = useOutline(projectId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newNodeTitle, setNewNodeTitle] = useState('');
   const [newArgText, setNewArgText] = useState('');
@@ -52,6 +53,14 @@ export function Gliederung({ projectId, sources }: { projectId: string; sources:
   const selected = rows.find((r) => r.id === selectedId) || rows[0] || null;
   const selectedArgs = points.filter((p) => p.nodeId === selected?.id);
   const gaps = points.filter((p) => p.sourceIds.length === 0);
+
+  const handleDeleteNode = async (e: React.MouseEvent, id: string, title: string) => {
+    e.stopPropagation();
+    const ok = await confirm(`Gliederungspunkt "${title}" inkl. Unterpunkte und Argumente unwiderruflich löschen?`, { title: 'Gliederungspunkt löschen', kind: 'warning' });
+    if (!ok) return;
+    if (selectedId === id) setSelectedId(null);
+    await deleteNode(id);
+  };
 
   const submitNode = () => {
     if (!newNodeTitle.trim()) return;
@@ -82,7 +91,8 @@ export function Gliederung({ projectId, sources }: { projectId: string; sources:
                 onClick={() => setSelectedId(r.id)}
               >
                 <span className="num">{r.number}</span>
-                <span>{r.title}</span>
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
+                <button className="ab danger" title="Löschen" onClick={(e) => handleDeleteNode(e, r.id, r.title)}><Icon name="close" size={11} /></button>
               </div>
             ))}
             {rows.length === 0 && <div className="t-sans-sm" style={{ padding: 8 }}>Noch keine Gliederungspunkte.</div>}

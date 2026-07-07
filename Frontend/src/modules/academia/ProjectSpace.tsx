@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { Icon } from '../../components/Icon';
+import { PdfViewer } from '../../components/PdfViewer';
 import { countWords, todayIso, formatRelative } from '../../lib/praxis/format';
 import { useProjectWorkspace, useProjectBoard } from '../../lib/academia/store';
 import type { SourceDto } from '../../lib/academia/api';
-import { formatCitation, buildBibliography } from '../../lib/academia/citation';
+import { formatVollzitat, formatKurzzitat, buildBibliography, type KurzzitatOptions } from '../../lib/academia/citation';
 import { NoteEditor } from './NoteEditor';
 import { ChapterEditor, type InsertRequest } from './ChapterEditor';
 import { Recherche } from './Recherche';
@@ -115,10 +117,11 @@ function ProjectUebersicht({ ws, goTab, projectId }: { ws: Workspace; goTab: (ta
           <div className="panel-head"><span className="title">Aufgaben</span></div>
           <div className="col" style={{ gap: 0 }}>
             {board.tasks.map((t) => (
-              <div key={t.id} className={`ckrow ${t.done ? 'done' : ''}`} onClick={() => !t.done && board.completeTask(t.id)}>
-                <span className="ck">{t.done && <Icon name="check" size={11} />}</span>
-                <span className="lbl">{t.title}</span>
+              <div key={t.id} className={`ckrow ${t.done ? 'done' : ''}`}>
+                <span className="ck" onClick={() => !t.done && board.completeTask(t.id)}>{t.done && <Icon name="check" size={11} />}</span>
+                <span className="lbl" onClick={() => !t.done && board.completeTask(t.id)} style={{ cursor: 'pointer' }}>{t.title}</span>
                 {t.dueDate && <span className="meta">{t.dueDate}</span>}
+                <button className="ab danger" title="Aufgabe löschen" onClick={() => board.deleteTask(t.id)}><Icon name="close" size={12} /></button>
               </div>
             ))}
             {board.tasks.length === 0 && <div className="t-sans-sm" style={{ padding: '8px 6px' }}>Noch keine Aufgaben.</div>}
@@ -213,13 +216,14 @@ const SOURCE_ICON: Record<string, 'scales' | 'doc' | 'folder' | 'book'> = {
 };
 
 function ProjectBibliothek({ ws }: { ws: Workspace }) {
-  const { sources, addSource, importSource } = ws;
+  const { sources, addSource, importSource, deleteSource } = ws;
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selId, setSelId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [form, setForm] = useState({ type: 'Literatur', citationKey: '', title: '', author: '', year: '', annotation: '' });
+  const [pdfSource, setPdfSource] = useState<SourceDto | null>(null);
+  const [form, setForm] = useState({ type: 'Literatur', citationKey: '', title: '', author: '', year: '', annotation: '', edition: '', place: '' });
 
   useEffect(() => {
     if (!selId && sources[0]) setSelId(sources[0].id);
@@ -234,14 +238,31 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
 
   const submit = () => {
     if (!form.title.trim()) return;
-    addSource(form.type, form.citationKey.trim() || form.title.trim(), form.title.trim(), form.author.trim(), form.year ? Number(form.year) : null, form.annotation.trim());
-    setForm((f) => ({ ...f, citationKey: '', title: '', author: '', year: '', annotation: '' }));
+    addSource(
+      form.type,
+      form.citationKey.trim() || form.title.trim(),
+      form.title.trim(),
+      form.author.trim(),
+      form.year ? Number(form.year) : null,
+      form.annotation.trim(),
+      form.edition.trim(),
+      form.place.trim(),
+    );
+    setForm((f) => ({ ...f, citationKey: '', title: '', author: '', year: '', annotation: '', edition: '', place: '' }));
     setAdding(false);
   };
 
   const handleImport = async () => {
     setImporting(true);
     try { await importSource(form.type); } finally { setImporting(false); }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, s: SourceDto) => {
+    e.stopPropagation();
+    const ok = await confirm(`Quelle "${s.title}" unwiderruflich löschen?`, { title: 'Quelle löschen', kind: 'warning' });
+    if (!ok) return;
+    if (selId === s.id) setSelId(null);
+    await deleteSource(s.id);
   };
 
   return (
@@ -290,6 +311,8 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
               <input className="input" style={{ flex: 1 }} placeholder="Autor" value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} />
               <input className="input" type="number" style={{ flex: '0 0 90px' }} placeholder="Jahr" value={form.year} onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))} />
               <input className="input" style={{ flex: 1 }} placeholder="Zitat-Key" value={form.citationKey} onChange={(e) => setForm((f) => ({ ...f, citationKey: e.target.value }))} />
+              <input className="input" style={{ flex: 1 }} placeholder="Auflage (z.B. 4.)" value={form.edition} onChange={(e) => setForm((f) => ({ ...f, edition: e.target.value }))} />
+              <input className="input" style={{ flex: 1 }} placeholder="Ort" value={form.place} onChange={(e) => setForm((f) => ({ ...f, place: e.target.value }))} />
               <input className="input" style={{ flex: 2 }} placeholder="Anmerkung" value={form.annotation} onChange={(e) => setForm((f) => ({ ...f, annotation: e.target.value }))} />
               <button className="btn-primary-dark" onClick={submit}><Icon name="plus" size={13} /> Speichern</button>
             </div>
@@ -309,11 +332,23 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
                 </div>
                 {s.author && <span className="t-mono-sm">{s.author}</span>}
               </div>
+              <span className="akt-actions">
+                {s.filePath && (
+                  <button className="ab" title="PDF anzeigen" onClick={(e) => { e.stopPropagation(); setPdfSource(s); }}>
+                    <Icon name="eye" size={14} />
+                  </button>
+                )}
+                <button className="ab danger" title="Quelle löschen" onClick={(e) => handleDelete(e, s)}><Icon name="close" size={13} /></button>
+              </span>
             </div>
           ))}
           {visible.length === 0 && <div className="t-sans-sm" style={{ padding: 8 }}>Keine Quellen gefunden.</div>}
         </div>
       </div>
+
+      {pdfSource?.filePath && (
+        <PdfViewer filePath={pdfSource.filePath} title={`${pdfSource.citationKey} · ${pdfSource.title}`} onClose={() => setPdfSource(null)} />
+      )}
 
       <div className="col scroll" style={{ gap: 16, minHeight: 0, overflowY: 'auto', paddingRight: 2 }}>
         {sel ? (
@@ -352,7 +387,7 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
 
 /* ---------- Notizen ---------- */
 function ProjectNotizen({ ws, focusId }: { ws: Workspace; focusId: string | null }) {
-  const { notes, addNote } = ws;
+  const { notes, addNote, deleteNote } = ws;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [newTitle, setNewTitle] = useState('');
@@ -378,6 +413,14 @@ function ProjectNotizen({ ws, focusId }: { ws: Workspace; focusId: string | null
     setNewTitle('');
   };
 
+  const handleDelete = async (e: React.MouseEvent, id: string, title: string) => {
+    e.stopPropagation();
+    const ok = await confirm(`Notiz "${title}" unwiderruflich löschen? Backlinks aus anderen Notizen werden entfernt.`, { title: 'Notiz löschen', kind: 'warning' });
+    if (!ok) return;
+    if (selectedId === id) setSelectedId(null);
+    await deleteNote(id);
+  };
+
   return (
     <div className="detail-body" style={{ gridTemplateColumns: '260px 1fr' }}>
       <div className="panel">
@@ -394,6 +437,7 @@ function ProjectNotizen({ ws, focusId }: { ws: Workspace; focusId: string | null
                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.title}</span>
                 <span className="t-mono-sm">{n.tags || '—'}</span>
               </div>
+              <button className="ab danger" title="Notiz löschen" onClick={(e) => handleDelete(e, n.id, n.title)}><Icon name="close" size={12} /></button>
             </div>
           ))}
           {visible.length === 0 && <div className="t-sans-sm" style={{ padding: 8 }}>Keine Notizen gefunden.</div>}
@@ -425,13 +469,12 @@ function ProjectNotizen({ ws, focusId }: { ws: Workspace; focusId: string | null
 
 /* ---------- Schreiben ---------- */
 function ProjectSchreiben({ ws, onOpenNote }: { ws: Workspace; onOpenNote: (noteId: string) => void }) {
-  const { chapters, notes, sources, addChapter, addNote, updateChapterContent, exportMarkdown, exportDocx } = ws;
+  const { chapters, notes, sources, addChapter, addNote, updateChapterContent, deleteChapter, exportMarkdown, exportDocx } = ws;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [insertRequest, setInsertRequest] = useState<InsertRequest | null>(null);
   const [fnSourceId, setFnSourceId] = useState('');
-  const [fnErwaegung, setFnErwaegung] = useState('');
-  const [fnZusatz, setFnZusatz] = useState('');
+  const [fnOpts, setFnOpts] = useState<KurzzitatOptions>({});
 
   const createLinkedNote = async (title: string) => {
     const note = await addNote(title);
@@ -453,14 +496,23 @@ function ProjectSchreiben({ ws, onOpenNote }: { ws: Workspace; onOpenNote: (note
     setNewTitle('');
   };
 
+  const handleDeleteChapter = async (e: React.MouseEvent, id: string, title: string) => {
+    e.stopPropagation();
+    const ok = await confirm(`Kapitel "${title}" unwiderruflich löschen?`, { title: 'Kapitel löschen', kind: 'warning' });
+    if (!ok) return;
+    if (selectedId === id) setSelectedId(null);
+    await deleteChapter(id);
+  };
+
   const selected = chapters.find((c) => c.id === selectedId) || null;
   const fnSource = sources.find((s) => s.id === fnSourceId) || null;
-  const fnCitation = fnSource ? formatCitation(fnSource, { erwaegung: fnErwaegung, zusatz: fnZusatz }) : '';
+  const fnVollzitat = fnSource ? formatVollzitat(fnSource) : '';
+  const fnKurzzitat = fnSource ? formatKurzzitat(fnSource, fnOpts) : '';
   const bibliography = buildBibliography(sources);
 
   const insertFootnote = () => {
-    if (!fnCitation) return;
-    setInsertRequest({ text: fnCitation, requestId: Date.now() });
+    if (!fnKurzzitat) return;
+    setInsertRequest({ text: fnKurzzitat, requestId: Date.now() });
   };
 
   return (
@@ -474,6 +526,7 @@ function ProjectSchreiben({ ws, onOpenNote }: { ws: Workspace; onOpenNote: (note
                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</span>
                 <span className="t-mono-sm">{c.status} · {countWords(c.content).toLocaleString('de-CH')} W.</span>
               </div>
+              <button className="ab danger" title="Kapitel löschen" onClick={(e) => handleDeleteChapter(e, c.id, c.title)}><Icon name="close" size={12} /></button>
             </div>
           ))}
           {chapters.length === 0 && <div className="t-sans-sm" style={{ padding: 8 }}>Noch keine Kapitel.</div>}
@@ -503,27 +556,54 @@ function ProjectSchreiben({ ws, onOpenNote }: { ws: Workspace; onOpenNote: (note
 
       <div className="col scroll" style={{ gap: 16, minHeight: 0, overflowY: 'auto', paddingRight: 2 }}>
         <div className="panel" style={{ flexShrink: 0 }}>
-          <div className="panel-head"><span className="title">Fussnoten-Generator</span></div>
+          <div className="panel-head">
+            <span className="title">Zitatgenerator</span>
+            <span className="t-mono-sm">Forstmoser/Ogorek/Schindler, § 18</span>
+          </div>
           <div className="col" style={{ gap: 10 }}>
-            <select className="input" value={fnSourceId} onChange={(e) => setFnSourceId(e.target.value)}>
+            <select className="input" value={fnSourceId} onChange={(e) => { setFnSourceId(e.target.value); setFnOpts({}); }}>
               <option value="">Quelle wählen …</option>
               {sources.map((s) => <option key={s.id} value={s.id}>{s.citationKey}</option>)}
             </select>
-            <div className="row-flex" style={{ gap: 8 }}>
-              <input className="input" style={{ flex: 1 }} placeholder="Erwägung" value={fnErwaegung} onChange={(e) => setFnErwaegung(e.target.value)} />
-              <input className="input" style={{ flex: 1 }} placeholder="Zusatz" value={fnZusatz} onChange={(e) => setFnZusatz(e.target.value)} />
-            </div>
-            <div className="t-body" style={{ background: 'var(--fill-2)', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line-1)', fontSize: 14, minHeight: 20 }}>
-              {fnCitation || <span style={{ opacity: 0.5 }}>Quelle wählen, um eine Fussnote zu erzeugen.</span>}
+
+            {fnSource?.type === 'BGE' && (
+              <div className="row-flex" style={{ gap: 8 }}>
+                <input className="input" style={{ flex: 1 }} placeholder="Erwägung (z.B. 3.5.1)" value={fnOpts.erwaegung || ''} onChange={(e) => setFnOpts((o) => ({ ...o, erwaegung: e.target.value }))} />
+                <input className="input" style={{ flex: 1 }} placeholder="Seite (fakultativ)" value={fnOpts.fundstelle || ''} onChange={(e) => setFnOpts((o) => ({ ...o, fundstelle: e.target.value }))} />
+              </div>
+            )}
+            {fnSource?.type === 'Gesetz' && (
+              <div className="row-flex" style={{ gap: 8 }}>
+                <input className="input" style={{ flex: 1 }} placeholder="Art." value={fnOpts.artikel || ''} onChange={(e) => setFnOpts((o) => ({ ...o, artikel: e.target.value }))} />
+                <input className="input" style={{ flex: 1 }} placeholder="Abs." value={fnOpts.absatz || ''} onChange={(e) => setFnOpts((o) => ({ ...o, absatz: e.target.value }))} />
+                <input className="input" style={{ flex: 1 }} placeholder="Ziff./Bst." value={fnOpts.ziffer || ''} onChange={(e) => setFnOpts((o) => ({ ...o, ziffer: e.target.value }))} />
+              </div>
+            )}
+            {(fnSource?.type === 'Literatur' || fnSource?.type === 'Materialien') && (
+              <input className="input" placeholder="Fundstelle (S. oder Rz.)" value={fnOpts.fundstelle || ''} onChange={(e) => setFnOpts((o) => ({ ...o, fundstelle: e.target.value }))} />
+            )}
+
+            <div className="col" style={{ gap: 4 }}>
+              <span className="t-mono-sm">Kurzzitat (Fussnote)</span>
+              <div className="t-body" style={{ background: 'var(--fill-2)', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line-1)', fontSize: 14, minHeight: 20 }}>
+                {fnKurzzitat || <span style={{ opacity: 0.5 }}>Quelle wählen, um ein Zitat zu erzeugen.</span>}
+              </div>
             </div>
             <div className="row-flex" style={{ gap: 6 }}>
-              <button className="btn-ghost-glass" style={{ flex: 1 }} disabled={!fnCitation} onClick={() => navigator.clipboard.writeText(fnCitation)}>
+              <button className="btn-ghost-glass" style={{ flex: 1 }} disabled={!fnKurzzitat} onClick={() => navigator.clipboard.writeText(fnKurzzitat)}>
                 <Icon name="link" size={12} /> kopieren
               </button>
-              <button className="btn-ghost-glass" disabled={!fnCitation || !selected} onClick={insertFootnote}>
+              <button className="btn-ghost-glass" disabled={!fnKurzzitat || !selected} onClick={insertFootnote}>
                 <Icon name="plus" size={12} /> in Kapitel
               </button>
             </div>
+
+            {fnVollzitat && (
+              <div className="col" style={{ gap: 4 }}>
+                <span className="t-mono-sm">Vollzitat (Verzeichnis)</span>
+                <div className="t-sans-sm" style={{ padding: '8px 10px', background: 'var(--fill-1)', borderRadius: 8 }}>{fnVollzitat}</div>
+              </div>
+            )}
           </div>
         </div>
 

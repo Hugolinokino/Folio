@@ -431,6 +431,22 @@ pub fn import_document(
     })
 }
 
+#[tauri::command]
+pub fn delete_document(state: tauri::State<AppState>, document_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    let file_path: Option<String> = conn
+        .query_row("SELECT file_path FROM documents WHERE id = ?1", rusqlite::params![document_id], |r| r.get(0))
+        .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM documents WHERE id = ?1", rusqlite::params![document_id])
+        .map_err(|e| e.to_string())?;
+    // Best effort: the row is the source of truth, a stale file only wastes disk.
+    if let Some(path) = file_path {
+        let _ = std::fs::remove_file(path);
+    }
+    Ok(())
+}
+
 // ============================================================
 // Offline-KI: embeddings & clustering (Akten)
 // ============================================================
