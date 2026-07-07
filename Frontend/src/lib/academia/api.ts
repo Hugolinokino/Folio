@@ -131,6 +131,8 @@ export const academiaApi = {
   getProject: (projectId: string) => invoke<ProjectDto>('get_project', { projectId }),
   createProject: (title: string, type: string, advisor: string) =>
     invoke<ProjectDto>('create_project', { title, type, advisor }),
+  renameProject: (projectId: string, title: string) => invoke<void>('rename_project', { projectId, title }),
+  deleteProject: (projectId: string) => invoke<void>('delete_project', { projectId }),
 
   listSources: (projectId: string) => invoke<SourceDto[]>('list_sources', { projectId }),
   createSource: (

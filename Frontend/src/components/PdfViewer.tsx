@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { Icon } from './Icon';
 
@@ -32,7 +33,13 @@ export function PdfViewer({ filePath, title, onClose }: { filePath: string; titl
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  return (
+  // Rendered into document.body via a portal: any ancestor with an active CSS
+  // transform/animation (e.g. the `.view-in` entrance animation used all over
+  // this app) turns into a containing block for `position: fixed` descendants,
+  // which otherwise made this modal render relative to that ancestor's box
+  // instead of the viewport — showing up "too high" whenever the window was
+  // maximized/fullscreen and that box didn't span the full window.
+  return createPortal(
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
@@ -63,6 +70,7 @@ export function PdfViewer({ filePath, title, onClose }: { filePath: string; titl
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

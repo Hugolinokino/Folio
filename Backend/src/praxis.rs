@@ -432,6 +432,35 @@ pub fn import_document(
 }
 
 #[tauri::command]
+pub fn rename_case(state: tauri::State<AppState>, case_id: String, title: String) -> Result<(), String> {
+    let title = title.trim();
+    if title.is_empty() {
+        return Err("Titel darf nicht leer sein.".to_string());
+    }
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("UPDATE cases SET title = ?2 WHERE id = ?1", rusqlite::params![case_id, title])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Deletes a case; deadlines/documents/parties/chrono/correspondence/billing/drafts
+/// all cascade via FK. The per-case documents directory is removed best-effort.
+#[tauri::command]
+pub fn delete_case(app: tauri::AppHandle, state: tauri::State<AppState>, case_id: String) -> Result<(), String> {
+    {
+        let guard = state.conn.lock().unwrap();
+        let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+        conn.execute("DELETE FROM cases WHERE id = ?1", rusqlite::params![case_id])
+            .map_err(|e| e.to_string())?;
+    }
+    if let Ok(dir) = app_data_dir(&app) {
+        let _ = std::fs::remove_dir_all(dir.join("documents").join(&case_id));
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub fn delete_document(state: tauri::State<AppState>, document_id: String) -> Result<(), String> {
     let guard = state.conn.lock().unwrap();
     let conn = guard.as_ref().ok_or("Workspace is locked.")?;
@@ -802,6 +831,26 @@ mod tests {
         set_document_clusters(&conn, &[("doc-2".into(), 1)]).unwrap();
         let c2b: i64 = conn.query_row("SELECT cluster_id FROM documents WHERE id = 'doc-2'", [], |r| r.get(0)).unwrap();
         assert_eq!(c2b, 1);
+
+        drop(conn);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn deleting_a_case_cascades_its_documents_and_deadlines() {
+        let (conn, path) = open_test_db();
+        conn.execute(
+            "INSERT INTO deadlines (id, case_id, title, due_date) VALUES ('dl-1', 'case-1', 'Frist', '2026-01-01')",
+            [],
+        )
+        .unwrap();
+
+        conn.execute("DELETE FROM cases WHERE id = 'case-1'", []).unwrap();
+
+        let docs: i64 = conn.query_row("SELECT count(*) FROM documents WHERE case_id = 'case-1'", [], |r| r.get(0)).unwrap();
+        let deadlines: i64 = conn.query_row("SELECT count(*) FROM deadlines WHERE case_id = 'case-1'", [], |r| r.get(0)).unwrap();
+        assert_eq!(docs, 0, "documents must cascade with their case");
+        assert_eq!(deadlines, 0, "deadlines must cascade with their case");
 
         drop(conn);
         let _ = std::fs::remove_file(&path);

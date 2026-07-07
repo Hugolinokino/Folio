@@ -126,6 +126,36 @@ pub fn create_project(
     .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub fn rename_project(state: tauri::State<AppState>, project_id: String, title: String) -> Result<(), String> {
+    let title = title.trim();
+    if title.is_empty() {
+        return Err("Titel darf nicht leer sein.".to_string());
+    }
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("UPDATE projects SET title = ?2 WHERE id = ?1", rusqlite::params![project_id, title])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Deletes a project; sources/notes/chapters/tasks/milestones/activity/outline/
+/// theses/quotes all cascade via FK. The per-project sources directory (PDFs)
+/// is removed best-effort.
+#[tauri::command]
+pub fn delete_project(app: tauri::AppHandle, state: tauri::State<AppState>, project_id: String) -> Result<(), String> {
+    {
+        let guard = state.conn.lock().unwrap();
+        let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+        conn.execute("DELETE FROM projects WHERE id = ?1", rusqlite::params![project_id])
+            .map_err(|e| e.to_string())?;
+    }
+    if let Ok(dir) = app_data_dir(&app) {
+        let _ = std::fs::remove_dir_all(dir.join("academia_sources").join(&project_id));
+    }
+    Ok(())
+}
+
 // ============================================================
 // Sources (Bibliothek)
 // ============================================================
@@ -1171,6 +1201,37 @@ mod tests {
         conn.execute("DELETE FROM notes WHERE id = 'note-b'", []).unwrap();
         let links: i64 = conn.query_row("SELECT count(*) FROM note_links", [], |r| r.get(0)).unwrap();
         assert_eq!(links, 0, "note_links must cascade when either endpoint is deleted");
+
+        drop(conn);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn deleting_a_project_cascades_all_child_entities() {
+        let (conn, path) = open_test_db();
+        conn.execute("INSERT INTO projects (id, title, type, color) VALUES ('proj-1', 'Test', 'Projekt', 'blue')", []).unwrap();
+        conn.execute("INSERT INTO sources (id, project_id, type, citation_key, title) VALUES ('src-1', 'proj-1', 'BGE', 'BGE 1', 'X.')", []).unwrap();
+        conn.execute("INSERT INTO notes (id, project_id, title, content) VALUES ('note-1', 'proj-1', 'N', '')", []).unwrap();
+        conn.execute("INSERT INTO chapters (id, project_id, title) VALUES ('ch-1', 'proj-1', 'K')", []).unwrap();
+        conn.execute("INSERT INTO tasks (id, project_id, title) VALUES ('task-1', 'proj-1', 'T')", []).unwrap();
+        conn.execute("INSERT INTO theses (id, project_id, claim) VALUES ('thesis-1', 'proj-1', 'C')", []).unwrap();
+        conn.execute("INSERT INTO quotes (id, project_id, source_id, text) VALUES ('quote-1', 'proj-1', 'src-1', 'Z')", []).unwrap();
+        conn.execute("INSERT INTO outline_nodes (id, project_id, title) VALUES ('node-1', 'proj-1', 'O')", []).unwrap();
+
+        conn.execute("DELETE FROM projects WHERE id = 'proj-1'", []).unwrap();
+
+        for (table, count_sql) in [
+            ("sources", "SELECT count(*) FROM sources"),
+            ("notes", "SELECT count(*) FROM notes"),
+            ("chapters", "SELECT count(*) FROM chapters"),
+            ("tasks", "SELECT count(*) FROM tasks"),
+            ("theses", "SELECT count(*) FROM theses"),
+            ("quotes", "SELECT count(*) FROM quotes"),
+            ("outline_nodes", "SELECT count(*) FROM outline_nodes"),
+        ] {
+            let n: i64 = conn.query_row(count_sql, [], |r| r.get(0)).unwrap();
+            assert_eq!(n, 0, "{table} must cascade when the project is deleted");
+        }
 
         drop(conn);
         let _ = std::fs::remove_file(&path);

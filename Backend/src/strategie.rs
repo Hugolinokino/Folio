@@ -55,6 +55,29 @@ pub fn create_strategy_workspace(
     Ok(StrategyWorkspaceSummary { id, title, horizon })
 }
 
+#[tauri::command]
+pub fn rename_strategy_workspace(state: tauri::State<AppState>, workspace_id: String, title: String) -> Result<(), String> {
+    let title = title.trim();
+    if title.is_empty() {
+        return Err("Titel darf nicht leer sein.".to_string());
+    }
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("UPDATE strategy_workspaces SET title = ?2 WHERE id = ?1", rusqlite::params![workspace_id, title])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Deletes a Vorhaben; its `strategy_data` row cascades via FK.
+#[tauri::command]
+pub fn delete_strategy_workspace(state: tauri::State<AppState>, workspace_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM strategy_workspaces WHERE id = ?1", rusqlite::params![workspace_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 /// Rust never interprets these blobs — each column is an opaque JSON string
 /// slice of the frontend's unified per-workspace state. The split across
 /// seven columns follows the spec's schema; only the frontend store knows

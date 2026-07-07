@@ -24,6 +24,8 @@ interface ProjectListContextValue {
   loading: boolean;
   reload: () => void;
   createProject: (title: string, type: string, advisor: string) => Promise<void>;
+  renameProject: (projectId: string, title: string) => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
 }
 
 const ProjectListContext = createContext<ProjectListContextValue | null>(null);
@@ -46,7 +48,22 @@ export function ProjectListProvider({ children }: { children: ReactNode }) {
     reload();
   };
 
-  const value = useMemo(() => ({ projects, loading, reload, createProject }), [projects, loading, reload]);
+  const renameProject = async (projectId: string, title: string) => {
+    const clean = title.trim();
+    if (!clean) return;
+    await academiaApi.renameProject(projectId, clean);
+    reload();
+  };
+
+  const deleteProject = async (projectId: string) => {
+    await academiaApi.deleteProject(projectId);
+    reload();
+  };
+
+  const value = useMemo(
+    () => ({ projects, loading, reload, createProject, renameProject, deleteProject }),
+    [projects, loading, reload],
+  );
   return <ProjectListContext.Provider value={value}>{children}</ProjectListContext.Provider>;
 }
 

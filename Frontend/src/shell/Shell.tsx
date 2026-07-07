@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { Icon, type IconName } from '../components/Icon';
 import { api } from '../lib/tauri';
 import { PraxisHome } from '../modules/praxis/PraxisHome';
@@ -135,6 +136,14 @@ function ShellInner() {
       return nt.length ? nt : ['p-home'];
     });
   };
+  /** A deleted Fall may still be open in a tab (or the Workbench under it) — drop those before the data disappears underneath them. */
+  const cleanupFallTabs = (fallId: string) => {
+    setPxTabs((t) => {
+      const nt = t.filter((x) => x !== `fall:${fallId}` && !x.startsWith(`wb:${fallId}:`));
+      return nt.length ? nt : ['p-home'];
+    });
+    setPxView((v) => (v === `fall:${fallId}` || v.startsWith(`wb:${fallId}:`) ? 'p-home' : v));
+  };
 
   const openProject = (projectId: string, tab?: string) => {
     if (tab) setProjectInitTab((m) => ({ ...m, [projectId]: tab }));
@@ -152,6 +161,14 @@ function ShellInner() {
       }
       return nt.length ? nt : ['a-home'];
     });
+  };
+  /** Same idea as cleanupFallTabs, for a deleted Academia project. */
+  const cleanupProjectTabs = (projectId: string) => {
+    setAcTabs((t) => {
+      const nt = t.filter((x) => x !== `project:${projectId}`);
+      return nt.length ? nt : ['a-home'];
+    });
+    setAcView((v) => (v === `project:${projectId}` ? 'a-home' : v));
   };
 
   const renderAcademia = () => {
@@ -219,6 +236,7 @@ function ShellInner() {
               newFallTitle={newFallTitle}
               setNewFallTitle={setNewFallTitle}
               onOpenFall={openFall}
+              onDeletedFall={cleanupFallTabs}
             />
           ) : mode === 'academia' ? (
             <AcademiaSwitcher
@@ -227,6 +245,7 @@ function ShellInner() {
               newProjectTitle={newProjectTitle}
               setNewProjectTitle={setNewProjectTitle}
               onOpenProject={openProject}
+              onDeletedProject={cleanupProjectTabs}
             />
           ) : (
             <div className="ws-switch">
@@ -382,26 +401,105 @@ function ShellInner() {
   );
 }
 
+/** One entry in a mode switcher's dropdown (Fall/Vorhaben/Projekt): click to
+ * open, pencil to rename inline, × to delete (with confirmation). Shared
+ * across all three switchers since the interaction is identical. */
+function SwitcherRow({
+  id,
+  title,
+  subtitle,
+  onOpen,
+  onRename,
+  onDelete,
+}: {
+  id: string;
+  title: string;
+  subtitle: string;
+  onOpen: () => void;
+  onRename: (id: string, title: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(title);
+
+  useEffect(() => {
+    if (!editing) setValue(title);
+  }, [title, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const clean = value.trim();
+    if (clean && clean !== title) onRename(id, clean);
+    else setValue(title);
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const ok = await confirm(`"${title}" unwiderruflich löschen? Alle zugehörigen Daten gehen verloren.`, {
+      title: 'Löschen',
+      kind: 'warning',
+    });
+    if (ok) onDelete(id);
+  };
+
+  return (
+    <div className="po" onClick={editing ? undefined : onOpen}>
+      <span className="pc" style={{ background: 'var(--accent)' }}></span>
+      {editing ? (
+        <input
+          className="po-add-input"
+          style={{ flex: 1 }}
+          value={value}
+          autoFocus
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            if (e.key === 'Escape') { setValue(title); setEditing(false); }
+          }}
+        />
+      ) : (
+        <span className="pt">{title}</span>
+      )}
+      <span className="ps">{subtitle}</span>
+      {!editing && (
+        <button className="ab" title="Umbenennen" onClick={(e) => { e.stopPropagation(); setEditing(true); }}>
+          <Icon name="edit" size={12} />
+        </button>
+      )}
+      <button className="ab danger" title="Löschen" onClick={handleDelete}><Icon name="close" size={12} /></button>
+    </div>
+  );
+}
+
 function PraxisSwitcher({
   open,
   setOpen,
   newFallTitle,
   setNewFallTitle,
   onOpenFall,
+  onDeletedFall,
 }: {
   open: boolean;
   setOpen: (fn: (o: boolean) => boolean) => void;
   newFallTitle: string;
   setNewFallTitle: (v: string) => void;
   onOpenFall: (id: string) => void;
+  onDeletedFall: (id: string) => void;
 }) {
-  const { cases, createCase } = useCaseList();
+  const { cases, createCase, renameCase, deleteCase } = useCaseList();
 
   const create = () => {
     const name = newFallTitle.trim();
     if (!name) return;
     createCase(name, '').then(() => setOpen(() => false));
     setNewFallTitle('');
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteCase(id);
+    onDeletedFall(id);
   };
 
   return (
@@ -415,11 +513,15 @@ function PraxisSwitcher({
             Fall öffnen
           </div>
           {cases.map((c) => (
-            <div key={c.id} className="po" onClick={() => { onOpenFall(c.id); setOpen(() => false); }}>
-              <span className="pc" style={{ background: 'var(--accent)' }}></span>
-              <span className="pt">{c.title}</span>
-              <span className="ps">{c.ref}</span>
-            </div>
+            <SwitcherRow
+              key={c.id}
+              id={c.id}
+              title={c.title}
+              subtitle={c.ref}
+              onOpen={() => { onOpenFall(c.id); setOpen(() => false); }}
+              onRename={renameCase}
+              onDelete={handleDelete}
+            />
           ))}
           <div className="po-add">
             <input
@@ -444,20 +546,27 @@ function AcademiaSwitcher({
   newProjectTitle,
   setNewProjectTitle,
   onOpenProject,
+  onDeletedProject,
 }: {
   open: boolean;
   setOpen: (fn: (o: boolean) => boolean) => void;
   newProjectTitle: string;
   setNewProjectTitle: (v: string) => void;
   onOpenProject: (id: string) => void;
+  onDeletedProject: (id: string) => void;
 }) {
-  const { projects, createProject } = useProjectList();
+  const { projects, createProject, renameProject, deleteProject } = useProjectList();
 
   const create = () => {
     const name = newProjectTitle.trim();
     if (!name) return;
     createProject(name, 'Projekt', '').then(() => setOpen(() => false));
     setNewProjectTitle('');
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteProject(id);
+    onDeletedProject(id);
   };
 
   return (
@@ -471,11 +580,15 @@ function AcademiaSwitcher({
             Projekt öffnen
           </div>
           {projects.map((p) => (
-            <div key={p.id} className="po" onClick={() => { onOpenProject(p.id); setOpen(() => false); }}>
-              <span className="pc" style={{ background: 'var(--accent)' }}></span>
-              <span className="pt">{p.title}</span>
-              <span className="ps">{p.type}</span>
-            </div>
+            <SwitcherRow
+              key={p.id}
+              id={p.id}
+              title={p.title}
+              subtitle={p.type}
+              onOpen={() => { onOpenProject(p.id); setOpen(() => false); }}
+              onRename={renameProject}
+              onDelete={handleDelete}
+            />
           ))}
           <div className="po-add">
             <input
@@ -507,7 +620,7 @@ function StrategieSwitcher({
   setNewVorhaben: (v: string) => void;
   onOpenHome: () => void;
 }) {
-  const { workspaces, currentId, switchWorkspace, createWorkspace } = useStrategie();
+  const { workspaces, currentId, switchWorkspace, createWorkspace, renameWorkspace, deleteWorkspace } = useStrategie();
   const current = workspaces.find((w) => w.id === currentId);
 
   const create = () => {
@@ -516,6 +629,11 @@ function StrategieSwitcher({
     createWorkspace(name, '').then(onOpenHome);
     setNewVorhaben('');
     setOpen(() => false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteWorkspace(id);
+    onOpenHome();
   };
 
   return (
@@ -529,11 +647,15 @@ function StrategieSwitcher({
             Vorhaben öffnen
           </div>
           {workspaces.map((w) => (
-            <div key={w.id} className="po" onClick={() => { switchWorkspace(w.id); onOpenHome(); setOpen(() => false); }}>
-              <span className="pc" style={{ background: 'var(--accent)' }}></span>
-              <span className="pt">{w.title}</span>
-              <span className="ps">{w.horizon}</span>
-            </div>
+            <SwitcherRow
+              key={w.id}
+              id={w.id}
+              title={w.title}
+              subtitle={w.horizon}
+              onOpen={() => { switchWorkspace(w.id); onOpenHome(); setOpen(() => false); }}
+              onRename={renameWorkspace}
+              onDelete={handleDelete}
+            />
           ))}
           <div className="po-add">
             <input

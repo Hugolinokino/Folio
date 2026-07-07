@@ -110,6 +110,8 @@ export const praxisApi = {
   listCases: () => invoke<CaseSummaryDto[]>('list_cases'),
   getCase: (caseId: string) => invoke<CaseDetailDto>('get_case', { caseId }),
   createCase: (title: string, gebiet: string) => invoke<CaseDetailDto>('create_case', { title, gebiet }),
+  renameCase: (caseId: string, title: string) => invoke<void>('rename_case', { caseId, title }),
+  deleteCase: (caseId: string) => invoke<void>('delete_case', { caseId }),
 
   listCaseParties: (caseId: string) => invoke<ParteiDto[]>('list_case_parties', { caseId }),
   createCaseParty: (caseId: string, rolle: string, name: string, detail: string, vertreter: string, isKlient: boolean) =>

@@ -21,6 +21,8 @@ export const strategieApi = {
   listWorkspaces: () => invoke<StrategyWorkspaceSummary[]>('list_strategy_workspaces'),
   createWorkspace: (title: string, horizon: string) =>
     invoke<StrategyWorkspaceSummary>('create_strategy_workspace', { title, horizon }),
+  renameWorkspace: (workspaceId: string, title: string) => invoke<void>('rename_strategy_workspace', { workspaceId, title }),
+  deleteWorkspace: (workspaceId: string) => invoke<void>('delete_strategy_workspace', { workspaceId }),
   getData: (workspaceId: string) => invoke<StrategyDataDto>('get_strategy_data', { workspaceId }),
   saveData: (workspaceId: string, data: StrategyDataDto) =>
     invoke<void>('save_strategy_data', { workspaceId, data }),

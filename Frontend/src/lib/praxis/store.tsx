@@ -11,6 +11,8 @@ interface CaseListContextValue {
   loading: boolean;
   reload: () => void;
   createCase: (title: string, gebiet: string) => Promise<void>;
+  renameCase: (caseId: string, title: string) => Promise<void>;
+  deleteCase: (caseId: string) => Promise<void>;
 }
 
 const CaseListContext = createContext<CaseListContextValue | null>(null);
@@ -38,7 +40,19 @@ export function CaseListProvider({ children }: { children: ReactNode }) {
     reload();
   };
 
-  const value = useMemo(() => ({ cases, loading, reload, createCase }), [cases, loading, reload]);
+  const renameCase = async (caseId: string, title: string) => {
+    const clean = title.trim();
+    if (!clean) return;
+    await praxisApi.renameCase(caseId, clean);
+    reload();
+  };
+
+  const deleteCase = async (caseId: string) => {
+    await praxisApi.deleteCase(caseId);
+    reload();
+  };
+
+  const value = useMemo(() => ({ cases, loading, reload, createCase, renameCase, deleteCase }), [cases, loading, reload]);
   return <CaseListContext.Provider value={value}>{children}</CaseListContext.Provider>;
 }
 

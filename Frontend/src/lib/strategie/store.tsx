@@ -104,6 +104,8 @@ interface StrategieContextValue {
   update: (fn: (draft: Vorhaben) => void) => void;
   switchWorkspace: (id: string) => void;
   createWorkspace: (title: string, horizon: string) => Promise<void>;
+  renameWorkspace: (id: string, title: string) => Promise<void>;
+  deleteWorkspace: (id: string) => Promise<void>;
 }
 
 const StrategieContext = createContext<StrategieContextValue | null>(null);
@@ -175,8 +177,37 @@ export function StrategieProvider({ children }: { children: ReactNode }) {
     setCurrentId(created.id);
   };
 
+  const renameWorkspace = async (id: string, title: string) => {
+    const clean = title.trim();
+    if (!clean) return;
+    await strategieApi.renameWorkspace(id, clean);
+    setWorkspaces((prev) => prev.map((w) => (w.id === id ? { ...w, title: clean } : w)));
+    if (id === currentId) {
+      setData((prev) => ({ ...prev, meta: liveMeta(clean, prev.meta.horizont) }));
+    }
+  };
+
+  const deleteWorkspace = async (id: string) => {
+    await strategieApi.deleteWorkspace(id);
+    const remaining = workspaces.filter((w) => w.id !== id);
+    if (id !== currentId) {
+      setWorkspaces(remaining);
+      return;
+    }
+    if (remaining.length > 0) {
+      setWorkspaces(remaining);
+      localStorage.setItem(CURRENT_KEY, remaining[0].id);
+      setCurrentId(remaining[0].id);
+    } else {
+      const created = await strategieApi.createWorkspace('Neues Vorhaben', '');
+      setWorkspaces([created]);
+      localStorage.setItem(CURRENT_KEY, created.id);
+      setCurrentId(created.id);
+    }
+  };
+
   const value = useMemo(
-    () => ({ workspaces, currentId, data, loading, update, switchWorkspace, createWorkspace }),
+    () => ({ workspaces, currentId, data, loading, update, switchWorkspace, createWorkspace, renameWorkspace, deleteWorkspace }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [workspaces, currentId, data, loading],
   );
