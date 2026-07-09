@@ -165,7 +165,11 @@ function ProjectUebersicht({ ws, goTab, projectId }: { ws: Workspace; goTab: (ta
           <div className="panel-head"><span className="title">Meilensteine</span></div>
           <div className="tl">
             {board.milestones.map((m) => (
-              <div key={m.id} className="ev"><span className="t">{m.targetDate}</span><span className="d">{m.title}</span></div>
+              <div key={m.id} className="ev" style={{ gridTemplateColumns: '70px 1fr auto', alignItems: 'center' }}>
+                <span className="t">{m.targetDate}</span>
+                <span className="d">{m.title}</span>
+                <button className="ab danger" title="Meilenstein löschen" onClick={() => board.deleteMilestone(m.id)}><Icon name="close" size={11} /></button>
+              </div>
             ))}
             {board.milestones.length === 0 && <div className="t-sans-sm" style={{ padding: '4px 0' }}>Noch keine Meilensteine.</div>}
           </div>
@@ -216,7 +220,7 @@ const SOURCE_ICON: Record<string, 'scales' | 'doc' | 'folder' | 'book'> = {
 };
 
 function ProjectBibliothek({ ws }: { ws: Workspace }) {
-  const { sources, addSource, importSource, deleteSource } = ws;
+  const { sources, addSource, importSource, deleteSource, renameSource } = ws;
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selId, setSelId] = useState<string | null>(null);
@@ -224,6 +228,8 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
   const [importing, setImporting] = useState(false);
   const [pdfSource, setPdfSource] = useState<SourceDto | null>(null);
   const [form, setForm] = useState({ type: 'Literatur', citationKey: '', title: '', author: '', year: '', annotation: '', edition: '', place: '' });
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
     if (!selId && sources[0]) setSelId(sources[0].id);
@@ -263,6 +269,17 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
     if (!ok) return;
     if (selId === s.id) setSelId(null);
     await deleteSource(s.id);
+  };
+
+  const startRename = (e: React.MouseEvent, s: SourceDto) => {
+    e.stopPropagation();
+    setRenamingId(s.id);
+    setRenameValue(s.title);
+  };
+
+  const commitRename = () => {
+    if (renamingId) renameSource(renamingId, renameValue);
+    setRenamingId(null);
   };
 
   return (
@@ -326,7 +343,20 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
               <div className="col" style={{ flex: 1, minWidth: 0, gap: 4 }}>
                 <div className="row-flex" style={{ gap: 10, minWidth: 0 }}>
                   <span className="sr-kurz">{s.citationKey}</span>
-                  <span className="sr-titel">{s.title}</span>
+                  {renamingId === s.id ? (
+                    <input
+                      className="po-add-input"
+                      style={{ flex: 1 }}
+                      autoFocus
+                      value={renameValue}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={commitRename}
+                      onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenamingId(null); }}
+                    />
+                  ) : (
+                    <span className="sr-titel">{s.title}</span>
+                  )}
                   <span style={{ flex: 1 }}></span>
                   {s.year != null && <span className="t-mono-num" style={{ flexShrink: 0 }}>{s.year}</span>}
                 </div>
@@ -338,6 +368,7 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
                     <Icon name="eye" size={14} />
                   </button>
                 )}
+                <button className="ab" title="Umbenennen" onClick={(e) => startRename(e, s)}><Icon name="edit" size={13} /></button>
                 <button className="ab danger" title="Quelle löschen" onClick={(e) => handleDelete(e, s)}><Icon name="close" size={13} /></button>
               </span>
             </div>
@@ -387,10 +418,12 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
 
 /* ---------- Notizen ---------- */
 function ProjectNotizen({ ws, focusId }: { ws: Workspace; focusId: string | null }) {
-  const { notes, addNote, deleteNote } = ws;
+  const { notes, addNote, renameNote, deleteNote } = ws;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [newTitle, setNewTitle] = useState('');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
     if (focusId) setSelectedId(focusId);
@@ -421,6 +454,17 @@ function ProjectNotizen({ ws, focusId }: { ws: Workspace; focusId: string | null
     await deleteNote(id);
   };
 
+  const startRename = (e: React.MouseEvent, id: string, title: string) => {
+    e.stopPropagation();
+    setRenamingId(id);
+    setRenameValue(title);
+  };
+
+  const commitRename = () => {
+    if (renamingId) renameNote(renamingId, renameValue);
+    setRenamingId(null);
+  };
+
   return (
     <div className="detail-body" style={{ gridTemplateColumns: '260px 1fr' }}>
       <div className="panel">
@@ -434,9 +478,24 @@ function ProjectNotizen({ ws, focusId }: { ws: Workspace; focusId: string | null
             <div key={n.id} className={`it ${selectedId === n.id ? 'on' : ''}`} onClick={() => setSelectedId(n.id)}>
               <span className="c"></span>
               <div className="col" style={{ gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.title}</span>
+                {renamingId === n.id ? (
+                  <input
+                    className="po-add-input"
+                    autoFocus
+                    value={renameValue}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenamingId(null); }}
+                  />
+                ) : (
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.title}</span>
+                )}
                 <span className="t-mono-sm">{n.tags || '—'}</span>
               </div>
+              {renamingId !== n.id && (
+                <button className="ab" title="Umbenennen" onClick={(e) => startRename(e, n.id, n.title)}><Icon name="edit" size={12} /></button>
+              )}
               <button className="ab danger" title="Notiz löschen" onClick={(e) => handleDelete(e, n.id, n.title)}><Icon name="close" size={12} /></button>
             </div>
           ))}
@@ -469,12 +528,14 @@ function ProjectNotizen({ ws, focusId }: { ws: Workspace; focusId: string | null
 
 /* ---------- Schreiben ---------- */
 function ProjectSchreiben({ ws, onOpenNote }: { ws: Workspace; onOpenNote: (noteId: string) => void }) {
-  const { chapters, notes, sources, addChapter, addNote, updateChapterContent, deleteChapter, exportMarkdown, exportDocx } = ws;
+  const { chapters, notes, sources, addChapter, addNote, renameChapter, updateChapterContent, deleteChapter, exportMarkdown, exportLatex, exportDocx, exportPdf } = ws;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [insertRequest, setInsertRequest] = useState<InsertRequest | null>(null);
   const [fnSourceId, setFnSourceId] = useState('');
   const [fnOpts, setFnOpts] = useState<KurzzitatOptions>({});
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const createLinkedNote = async (title: string) => {
     const note = await addNote(title);
@@ -504,6 +565,17 @@ function ProjectSchreiben({ ws, onOpenNote }: { ws: Workspace; onOpenNote: (note
     await deleteChapter(id);
   };
 
+  const startRenameChapter = (e: React.MouseEvent, id: string, title: string) => {
+    e.stopPropagation();
+    setRenamingId(id);
+    setRenameValue(title);
+  };
+
+  const commitRenameChapter = () => {
+    if (renamingId) renameChapter(renamingId, renameValue);
+    setRenamingId(null);
+  };
+
   const selected = chapters.find((c) => c.id === selectedId) || null;
   const fnSource = sources.find((s) => s.id === fnSourceId) || null;
   const fnVollzitat = fnSource ? formatVollzitat(fnSource) : '';
@@ -523,9 +595,24 @@ function ProjectSchreiben({ ws, onOpenNote }: { ws: Workspace; onOpenNote: (note
           {chapters.map((c) => (
             <div key={c.id} className={`it ${selectedId === c.id ? 'on' : ''}`} onClick={() => setSelectedId(c.id)}>
               <div className="col" style={{ gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</span>
+                {renamingId === c.id ? (
+                  <input
+                    className="po-add-input"
+                    autoFocus
+                    value={renameValue}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onBlur={commitRenameChapter}
+                    onKeyDown={(e) => { if (e.key === 'Enter') commitRenameChapter(); if (e.key === 'Escape') setRenamingId(null); }}
+                  />
+                ) : (
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</span>
+                )}
                 <span className="t-mono-sm">{c.status} · {countWords(c.content).toLocaleString('de-CH')} W.</span>
               </div>
+              {renamingId !== c.id && (
+                <button className="ab" title="Umbenennen" onClick={(e) => startRenameChapter(e, c.id, c.title)}><Icon name="edit" size={12} /></button>
+              )}
               <button className="ab danger" title="Kapitel löschen" onClick={(e) => handleDeleteChapter(e, c.id, c.title)}><Icon name="close" size={12} /></button>
             </div>
           ))}
@@ -639,6 +726,26 @@ function ProjectSchreiben({ ws, onOpenNote }: { ws: Workspace; onOpenNote: (note
               <div className="col" style={{ flex: 1, gap: 2 }}>
                 <span className="nm" style={{ fontSize: 15 }}>Word (.docx)</span>
                 <span className="de" style={{ fontSize: 12.5 }}>Kapitel + Quellenverzeichnis</span>
+              </div>
+              <Icon name="download" size={15} />
+            </div>
+            <div className="db-tile" style={{ minHeight: 'auto', flexDirection: 'row', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={exportPdf}>
+              <span style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--fill-1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="doc" size={16} />
+              </span>
+              <div className="col" style={{ flex: 1, gap: 2 }}>
+                <span className="nm" style={{ fontSize: 15 }}>PDF</span>
+                <span className="de" style={{ fontSize: 12.5 }}>Kapitel + Quellenverzeichnis, satzfertig</span>
+              </div>
+              <Icon name="download" size={15} />
+            </div>
+            <div className="db-tile" style={{ minHeight: 'auto', flexDirection: 'row', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={exportLatex}>
+              <span style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--fill-1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="doc" size={16} />
+              </span>
+              <div className="col" style={{ flex: 1, gap: 2 }}>
+                <span className="nm" style={{ fontSize: 15 }}>LaTeX (.tex)</span>
+                <span className="de" style={{ fontSize: 12.5 }}>Kapitel + Quellenverzeichnis als Quelltext</span>
               </div>
               <Icon name="download" size={15} />
             </div>

@@ -95,20 +95,22 @@ export function Login({ onUnlocked }: LoginProps) {
 
             {error && <div className="login-error">{error}</div>}
 
-            <label className="login-field">
-              <span className="t-mono-sm">Name</span>
-              <div className="login-input-wrap">
-                <Icon name="mail" size={16} />
-                <input
-                  className="input"
-                  type="text"
-                  placeholder="Kanzlei Bodenmann"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-            </label>
+            {mode === 'create' && (
+              <label className="login-field">
+                <span className="t-mono-sm">Name</span>
+                <div className="login-input-wrap">
+                  <Icon name="mail" size={16} />
+                  <input
+                    className="input"
+                    type="text"
+                    placeholder="Kanzlei Bodenmann"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              </label>
+            )}
 
             <label className="login-field">
               <span className="t-mono-sm">{mode === 'create' ? 'Passwort festlegen' : 'Passwort'}</span>
@@ -120,6 +122,7 @@ export function Login({ onUnlocked }: LoginProps) {
                   placeholder="••••••••••"
                   value={pw}
                   onChange={(e) => setPw(e.target.value)}
+                  autoFocus={mode === 'unlock'}
                 />
                 <span className="login-eye" onClick={() => setShowPw((s) => !s)}>
                   <Icon name="eye" size={16} />

@@ -275,6 +275,19 @@ pub fn delete_source(state: tauri::State<AppState>, source_id: String) -> Result
     Ok(())
 }
 
+#[tauri::command]
+pub fn rename_source(state: tauri::State<AppState>, source_id: String, title: String) -> Result<(), String> {
+    let title = title.trim();
+    if title.is_empty() {
+        return Err("Titel darf nicht leer sein.".to_string());
+    }
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("UPDATE sources SET title = ?2 WHERE id = ?1", rusqlite::params![source_id, title])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub fn import_source(
@@ -407,6 +420,22 @@ pub fn get_note(state: tauri::State<AppState>, note_id: String) -> Result<NoteDe
         row_to_note_detail,
     )
     .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn rename_note(state: tauri::State<AppState>, note_id: String, title: String) -> Result<(), String> {
+    let title = title.trim();
+    if title.is_empty() {
+        return Err("Titel darf nicht leer sein.".to_string());
+    }
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute(
+        "UPDATE notes SET title = ?2, updated_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        rusqlite::params![note_id, title],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -543,6 +572,22 @@ pub fn list_chapters(state: tauri::State<AppState>, project_id: String) -> Resul
         })
         .map_err(|e| e.to_string())?;
     rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn rename_chapter(state: tauri::State<AppState>, chapter_id: String, title: String) -> Result<(), String> {
+    let title = title.trim();
+    if title.is_empty() {
+        return Err("Titel darf nicht leer sein.".to_string());
+    }
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute(
+        "UPDATE chapters SET title = ?2, updated_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        rusqlite::params![chapter_id, title],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -695,6 +740,15 @@ pub fn create_milestone(state: tauri::State<AppState>, project_id: String, title
     .map_err(|e| e.to_string())?;
     log_activity(conn, &project_id, &format!("Meilenstein \"{title}\" gesetzt")).map_err(|e| e.to_string())?;
     Ok(Milestone { id, project_id, title, target_date })
+}
+
+#[tauri::command]
+pub fn delete_milestone(state: tauri::State<AppState>, milestone_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM milestones WHERE id = ?1", rusqlite::params![milestone_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[derive(Serialize)]

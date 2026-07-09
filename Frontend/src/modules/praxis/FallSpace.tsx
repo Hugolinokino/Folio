@@ -69,12 +69,12 @@ export function FallSpace({
         ))}
       </div>
 
-      {tab === 'uebersicht' && <FallUebersicht fall={fall} onOpenWorkbench={onOpenWorkbench} goTab={setTab} addDraft={ws.addDraft} />}
+      {tab === 'uebersicht' && <FallUebersicht fall={fall} onOpenWorkbench={onOpenWorkbench} goTab={setTab} addDraft={ws.addDraft} deleteParty={ws.deleteParty} />}
       {tab === 'akten' && <FallAkten fall={fall} uploadDocument={ws.uploadDocument} deleteDocument={ws.deleteDocument} clusterDocuments={ws.clusterDocuments} initialAnsicht={initialSub} />}
-      {tab === 'fristen' && <FallFristen fall={fall} addFrist={ws.addFrist} completeFrist={ws.completeFrist} />}
+      {tab === 'fristen' && <FallFristen fall={fall} addFrist={ws.addFrist} completeFrist={ws.completeFrist} deleteFrist={ws.deleteFrist} />}
       {tab === 'chronologie' && <FallChrono fall={fall} addChronoEvent={ws.addChronoEvent} />}
-      {tab === 'korrespondenz' && <FallPost fall={fall} addCorrespondence={ws.addCorrespondence} />}
-      {tab === 'honorar' && <FallHonorar fall={fall} addBillingEntry={ws.addBillingEntry} />}
+      {tab === 'korrespondenz' && <FallPost fall={fall} addCorrespondence={ws.addCorrespondence} deleteCorrespondence={ws.deleteCorrespondence} />}
+      {tab === 'honorar' && <FallHonorar fall={fall} addBillingEntry={ws.addBillingEntry} deleteBillingEntry={ws.deleteBillingEntry} />}
     </div>
   );
 }
@@ -85,15 +85,22 @@ function FallUebersicht({
   onOpenWorkbench,
   goTab,
   addDraft,
+  deleteParty,
 }: {
   fall: Fall;
   onOpenWorkbench: (fallId: string, entwurfId: string) => void;
   goTab: (tab: string) => void;
   addDraft: Workspace['addDraft'];
+  deleteParty: Workspace['deleteParty'];
 }) {
   const handleFirstDraft = async () => {
     const draft = await addDraft('Erster Entwurf', 'Rechtsschrift');
     if (draft) onOpenWorkbench(fall.id, draft.id);
+  };
+
+  const handleDeleteParty = async (id: string, name: string) => {
+    const ok = await confirm(`Partei "${name}" unwiderruflich löschen?`, { title: 'Partei löschen', kind: 'warning' });
+    if (ok) await deleteParty(id);
   };
 
   return (
@@ -103,11 +110,14 @@ function FallUebersicht({
         <div className="panel-head"><span className="title">Parteien</span></div>
         <div className="col" style={{ gap: 14 }}>
           {fall.parteien.map((p) => (
-            <div key={p.id} className={`partei ${p.klient ? 'klient' : ''}`}>
+            <div key={p.id} className={`partei ${p.klient ? 'klient' : ''}`} style={{ position: 'relative' }}>
               <div className="pa-rolle">{p.rolle}{p.klient && <span className="pa-badge">Klient</span>}</div>
               <div className="pa-name">{p.name}</div>
               <div className="pa-det">{p.detail}</div>
               <div className="pa-vert">{p.vertreter}</div>
+              <button className="ab danger" style={{ position: 'absolute', top: 0, right: 0 }} title="Partei löschen" onClick={() => handleDeleteParty(p.id, p.name)}>
+                <Icon name="close" size={12} />
+              </button>
             </div>
           ))}
         </div>
@@ -459,10 +469,12 @@ function FallFristen({
   fall,
   addFrist,
   completeFrist,
+  deleteFrist,
 }: {
   fall: Fall;
   addFrist: Workspace['addFrist'];
   completeFrist: Workspace['completeFrist'];
+  deleteFrist: Workspace['deleteFrist'];
 }) {
   const [titel, setTitel] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -477,6 +489,11 @@ function FallFristen({
     setTitel('');
     setDueDate('');
     setNote('');
+  };
+
+  const handleDelete = async (f: (typeof offene)[number]) => {
+    const ok = await confirm(`Frist "${f.titel}" unwiderruflich löschen?`, { title: 'Frist löschen', kind: 'warning' });
+    if (ok) await deleteFrist(f.id);
   };
 
   return (
@@ -495,6 +512,9 @@ function FallFristen({
             </div>
             <span className="frist-art">{f.art}</span>
             <span className="fr-d">{f.datum}</span>
+            <button className="ab danger" title="Frist löschen" onClick={() => handleDelete(f)}>
+              <Icon name="close" size={12} />
+            </button>
           </div>
         ))}
       </div>
@@ -557,7 +577,15 @@ function FallChrono({ fall, addChronoEvent }: { fall: Fall; addChronoEvent: Work
 }
 
 /* ---------- Korrespondenz ---------- */
-function FallPost({ fall, addCorrespondence }: { fall: Fall; addCorrespondence: Workspace['addCorrespondence'] }) {
+function FallPost({
+  fall,
+  addCorrespondence,
+  deleteCorrespondence,
+}: {
+  fall: Fall;
+  addCorrespondence: Workspace['addCorrespondence'];
+  deleteCorrespondence: Workspace['deleteCorrespondence'];
+}) {
   const [richtung, setRichtung] = useState<'ein' | 'aus'>('ein');
   const [von, setVon] = useState('');
   const [betreff, setBetreff] = useState('');
@@ -570,6 +598,11 @@ function FallPost({ fall, addCorrespondence }: { fall: Fall; addCorrespondence: 
     setVon('');
     setBetreff('');
     setTyp('');
+  };
+
+  const handleDelete = async (id: string, betreff: string) => {
+    const ok = await confirm(`Eintrag "${betreff}" unwiderruflich löschen?`, { title: 'Korrespondenz löschen', kind: 'warning' });
+    if (ok) await deleteCorrespondence(id);
   };
 
   return (
@@ -596,6 +629,9 @@ function FallPost({ fall, addCorrespondence }: { fall: Fall; addCorrespondence: 
             </div>
             <span className="chip" style={{ height: 20, fontSize: 10 }}>{k.typ}</span>
             <span className="fr-d">{k.datum}</span>
+            <button className="ab danger" title="Eintrag löschen" onClick={() => handleDelete(k.id, k.betreff)}>
+              <Icon name="close" size={12} />
+            </button>
           </div>
         ))}
       </div>
@@ -604,7 +640,15 @@ function FallPost({ fall, addCorrespondence }: { fall: Fall; addCorrespondence: 
 }
 
 /* ---------- Honorar ---------- */
-function FallHonorar({ fall, addBillingEntry }: { fall: Fall; addBillingEntry: Workspace['addBillingEntry'] }) {
+function FallHonorar({
+  fall,
+  addBillingEntry,
+  deleteBillingEntry,
+}: {
+  fall: Fall;
+  addBillingEntry: Workspace['addBillingEntry'];
+  deleteBillingEntry: Workspace['deleteBillingEntry'];
+}) {
   const h = fall.honorar;
   const chf = Math.round(h.total * h.rate);
   const [datum, setDatum] = useState(todayIso());
@@ -617,6 +661,11 @@ function FallHonorar({ fall, addBillingEntry }: { fall: Fall; addBillingEntry: W
     addBillingEntry(taetigkeit.trim(), min, datum);
     setTaetigkeit('');
     setMinuten('');
+  };
+
+  const handleDelete = async (id: string, taetigkeit: string) => {
+    const ok = await confirm(`Eintrag "${taetigkeit}" unwiderruflich löschen?`, { title: 'Eintrag löschen', kind: 'warning' });
+    if (ok) await deleteBillingEntry(id);
   };
 
   return (
@@ -644,6 +693,9 @@ function FallHonorar({ fall, addBillingEntry }: { fall: Fall; addBillingEntry: W
               <span className="hr-t">{e.taetigkeit}</span>
               <span className="hr-min">{(e.minuten / 60).toFixed(2)} h</span>
               <span className="hr-chf">CHF {Math.round(e.minuten / 60 * h.rate).toLocaleString('de-CH')}</span>
+              <button className="ab danger" title="Eintrag löschen" onClick={() => handleDelete(e.id, e.taetigkeit)}>
+                <Icon name="close" size={12} />
+              </button>
             </div>
           ))}
         </div>

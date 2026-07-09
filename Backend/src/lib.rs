@@ -3,6 +3,7 @@ mod academia_export;
 mod auth;
 mod commands;
 mod db;
+mod documents;
 mod praxis;
 mod strategie;
 
@@ -55,6 +56,13 @@ pub fn run() {
       praxis::list_drafts,
       praxis::create_draft,
       praxis::update_draft_content,
+      praxis::export_draft_markdown,
+      praxis::export_draft_docx,
+      praxis::export_draft_pdf,
+      praxis::delete_deadline,
+      praxis::delete_case_party,
+      praxis::delete_correspondence,
+      praxis::delete_billing_entry,
       academia::list_projects,
       academia::get_project,
       academia::create_project,
@@ -62,16 +70,19 @@ pub fn run() {
       academia::delete_project,
       academia::list_sources,
       academia::create_source,
+      academia::rename_source,
       academia::import_source,
       academia::delete_source,
       academia::list_notes,
       academia::get_note,
       academia::create_note,
+      academia::rename_note,
       academia::update_note,
       academia::delete_note,
       academia::list_backlinks,
       academia::list_chapters,
       academia::create_chapter,
+      academia::rename_chapter,
       academia::update_chapter_content,
       academia::delete_chapter,
       academia::list_tasks,
@@ -80,6 +91,7 @@ pub fn run() {
       academia::delete_task,
       academia::list_milestones,
       academia::create_milestone,
+      academia::delete_milestone,
       academia::list_activity,
       academia::list_outline,
       academia::create_outline_node,
@@ -97,7 +109,9 @@ pub fn run() {
       academia::create_quote,
       academia::delete_quote,
       academia_export::export_chapters_markdown,
+      academia_export::export_chapters_latex,
       academia_export::export_chapters_docx,
+      academia_export::export_chapters_pdf,
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

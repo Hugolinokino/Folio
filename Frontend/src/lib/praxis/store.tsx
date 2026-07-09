@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { open } from '@tauri-apps/plugin-dialog';
+import { open, save } from '@tauri-apps/plugin-dialog';
 import { praxisApi, type CaseSummaryDto, type CaseDetailDto, type ParteiDto, type DeadlineDto, type DocumentDto, type ChronoEventDto, type CorrespondenceDto, type BillingEntryDto, type DraftDto } from './api';
 import { countWords, daysUntil, formatDateDe, formatRelative, todayIso } from './format';
 import { extractPdfText } from './pdf';
@@ -217,6 +217,11 @@ export function useCaseWorkspace(caseId: string | null) {
     await reload();
   };
 
+  const deleteFrist = async (deadlineId: string) => {
+    await praxisApi.deleteDeadline(deadlineId);
+    await reload();
+  };
+
   const addChronoEvent = async (ereignis: string, beleg: string, eventDate = todayIso()) => {
     if (!caseId) return;
     await praxisApi.createChronoEvent(caseId, eventDate, ereignis, beleg);
@@ -229,15 +234,30 @@ export function useCaseWorkspace(caseId: string | null) {
     await reload();
   };
 
+  const deleteCorrespondence = async (correspondenceId: string) => {
+    await praxisApi.deleteCorrespondence(correspondenceId);
+    await reload();
+  };
+
   const addBillingEntry = async (taetigkeit: string, minutes: number, entryDate = todayIso()) => {
     if (!caseId) return;
     await praxisApi.createBillingEntry(caseId, entryDate, taetigkeit, minutes);
     await reload();
   };
 
+  const deleteBillingEntry = async (billingId: string) => {
+    await praxisApi.deleteBillingEntry(billingId);
+    await reload();
+  };
+
   const addParty = async (rolle: string, name: string, detail: string, vertreter: string, isKlient: boolean) => {
     if (!caseId) return;
     await praxisApi.createCaseParty(caseId, rolle, name, detail, vertreter, isKlient);
+    await reload();
+  };
+
+  const deleteParty = async (partyId: string) => {
+    await praxisApi.deleteCaseParty(partyId);
     await reload();
   };
 
@@ -250,6 +270,18 @@ export function useCaseWorkspace(caseId: string | null) {
 
   const updateDraftContent = async (draftId: string, content: string) => {
     await praxisApi.updateDraftContent(draftId, content);
+  };
+
+  const exportDraftDocx = async (draftId: string, titel: string) => {
+    const path = await save({ defaultPath: `${titel}.docx`, filters: [{ name: 'Word', extensions: ['docx'] }] });
+    if (!path) return;
+    await praxisApi.exportDraftDocx(draftId, path);
+  };
+
+  const exportDraftPdf = async (draftId: string, titel: string) => {
+    const path = await save({ defaultPath: `${titel}.pdf`, filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+    if (!path) return;
+    await praxisApi.exportDraftPdf(draftId, path);
   };
 
   const uploadDocument = async (folder: string) => {
@@ -286,12 +318,18 @@ export function useCaseWorkspace(caseId: string | null) {
     reload,
     addFrist,
     completeFrist,
+    deleteFrist,
     addChronoEvent,
     addCorrespondence,
+    deleteCorrespondence,
     addBillingEntry,
+    deleteBillingEntry,
     addParty,
+    deleteParty,
     addDraft,
     updateDraftContent,
+    exportDraftDocx,
+    exportDraftPdf,
     uploadDocument,
     deleteDocument,
     clusterDocuments,

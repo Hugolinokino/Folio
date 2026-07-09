@@ -146,6 +146,7 @@ export const academiaApi = {
     edition: string,
     place: string,
   ) => invoke<SourceDto>('create_source', { projectId, type, citationKey, title, author, year, annotation, edition, place }),
+  renameSource: (sourceId: string, title: string) => invoke<void>('rename_source', { sourceId, title }),
   readBinaryFile: (path: string) => invoke<number[]>('read_binary_file', { path }),
   importSource: (
     projectId: string,
@@ -166,6 +167,7 @@ export const academiaApi = {
   listNotes: (projectId: string) => invoke<NoteSummaryDto[]>('list_notes', { projectId }),
   getNote: (noteId: string) => invoke<NoteDetailDto>('get_note', { noteId }),
   createNote: (projectId: string, title: string) => invoke<NoteDetailDto>('create_note', { projectId, title }),
+  renameNote: (noteId: string, title: string) => invoke<void>('rename_note', { noteId, title }),
   updateNote: (noteId: string, content: string, tags: string) =>
     invoke<void>('update_note', { noteId, content, tags }),
   deleteNote: (noteId: string) => invoke<void>('delete_note', { noteId }),
@@ -173,6 +175,7 @@ export const academiaApi = {
 
   listChapters: (projectId: string) => invoke<ChapterDto[]>('list_chapters', { projectId }),
   createChapter: (projectId: string, title: string) => invoke<ChapterDto>('create_chapter', { projectId, title }),
+  renameChapter: (chapterId: string, title: string) => invoke<void>('rename_chapter', { chapterId, title }),
   updateChapterContent: (chapterId: string, content: string) =>
     invoke<void>('update_chapter_content', { chapterId, content }),
   deleteChapter: (chapterId: string) => invoke<void>('delete_chapter', { chapterId }),
@@ -186,6 +189,7 @@ export const academiaApi = {
   listMilestones: (projectId: string) => invoke<MilestoneDto[]>('list_milestones', { projectId }),
   createMilestone: (projectId: string, title: string, targetDate: string) =>
     invoke<MilestoneDto>('create_milestone', { projectId, title, targetDate }),
+  deleteMilestone: (milestoneId: string) => invoke<void>('delete_milestone', { milestoneId }),
 
   listActivity: (projectId: string) => invoke<ActivityEntryDto[]>('list_activity', { projectId }),
 
@@ -215,6 +219,10 @@ export const academiaApi = {
   deleteQuote: (quoteId: string) => invoke<void>('delete_quote', { quoteId }),
 
   exportChaptersMarkdown: (projectId: string) => invoke<string>('export_chapters_markdown', { projectId }),
+  exportChaptersLatex: (projectId: string, bibliography: BibliographySection[]) =>
+    invoke<string>('export_chapters_latex', { projectId, bibliography }),
   exportChaptersDocx: (projectId: string, path: string, bibliography: BibliographySection[]) =>
     invoke<void>('export_chapters_docx', { projectId, path, bibliography }),
+  exportChaptersPdf: (projectId: string, path: string, bibliography: BibliographySection[]) =>
+    invoke<void>('export_chapters_pdf', { projectId, path, bibliography }),
 };

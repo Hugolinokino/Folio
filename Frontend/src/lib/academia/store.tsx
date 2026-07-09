@@ -131,11 +131,25 @@ export function useProjectWorkspace(projectId: string | null) {
     await reload();
   };
 
+  const renameSource = async (sourceId: string, title: string) => {
+    const clean = title.trim();
+    if (!clean) return;
+    await academiaApi.renameSource(sourceId, clean);
+    await reload();
+  };
+
   const addNote = async (title: string) => {
     if (!projectId) return null;
     const note = await academiaApi.createNote(projectId, title);
     await reload();
     return note;
+  };
+
+  const renameNote = async (noteId: string, title: string) => {
+    const clean = title.trim();
+    if (!clean) return;
+    await academiaApi.renameNote(noteId, clean);
+    await reload();
   };
 
   const updateNoteContent = async (noteId: string, content: string, tags: string) => {
@@ -154,6 +168,13 @@ export function useProjectWorkspace(projectId: string | null) {
     return chapter;
   };
 
+  const renameChapter = async (chapterId: string, title: string) => {
+    const clean = title.trim();
+    if (!clean) return;
+    await academiaApi.renameChapter(chapterId, clean);
+    await reload();
+  };
+
   const updateChapterContent = async (chapterId: string, content: string) => {
     await academiaApi.updateChapterContent(chapterId, content);
   };
@@ -169,6 +190,12 @@ export function useProjectWorkspace(projectId: string | null) {
     download(`${project?.title || 'export'}.md`, md, 'text/markdown');
   };
 
+  const exportLatex = async () => {
+    if (!projectId) return;
+    const tex = await academiaApi.exportChaptersLatex(projectId, buildBibliography(sources));
+    download(`${project?.title || 'export'}.tex`, tex, 'application/x-tex');
+  };
+
   const exportDocx = async () => {
     if (!projectId) return;
     const path = await save({
@@ -177,6 +204,16 @@ export function useProjectWorkspace(projectId: string | null) {
     });
     if (!path) return;
     await academiaApi.exportChaptersDocx(projectId, path, buildBibliography(sources));
+  };
+
+  const exportPdf = async () => {
+    if (!projectId) return;
+    const path = await save({
+      defaultPath: `${project?.title || 'export'}.pdf`,
+      filters: [{ name: 'PDF', extensions: ['pdf'] }],
+    });
+    if (!path) return;
+    await academiaApi.exportChaptersPdf(projectId, path, buildBibliography(sources));
   };
 
   return {
@@ -189,14 +226,19 @@ export function useProjectWorkspace(projectId: string | null) {
     addSource,
     importSource,
     deleteSource,
+    renameSource,
     addNote,
+    renameNote,
     updateNoteContent,
     deleteNote,
     addChapter,
+    renameChapter,
     updateChapterContent,
     deleteChapter,
     exportMarkdown,
+    exportLatex,
     exportDocx,
+    exportPdf,
   };
 }
 
@@ -245,7 +287,12 @@ export function useProjectBoard(projectId: string | null) {
     await reload();
   };
 
-  return { tasks, milestones, activity, loading, reload, addTask, completeTask, deleteTask, addMilestone };
+  const deleteMilestone = async (milestoneId: string) => {
+    await academiaApi.deleteMilestone(milestoneId);
+    await reload();
+  };
+
+  return { tasks, milestones, activity, loading, reload, addTask, completeTask, deleteTask, addMilestone, deleteMilestone };
 }
 
 /** Gliederung — outline tree + per-node Argumentationslinie, with a real (source-count-based) Lücken-Check. */

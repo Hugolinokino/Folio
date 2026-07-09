@@ -116,12 +116,14 @@ export const praxisApi = {
   listCaseParties: (caseId: string) => invoke<ParteiDto[]>('list_case_parties', { caseId }),
   createCaseParty: (caseId: string, rolle: string, name: string, detail: string, vertreter: string, isKlient: boolean) =>
     invoke<ParteiDto>('create_case_party', { caseId, rolle, name, detail, vertreter, isKlient }),
+  deleteCaseParty: (partyId: string) => invoke<void>('delete_case_party', { partyId }),
 
   listDeadlines: (caseId: string) => invoke<DeadlineDto[]>('list_deadlines', { caseId }),
   listAllDeadlines: () => invoke<DeadlineWithCaseDto[]>('list_all_deadlines'),
   createDeadline: (caseId: string, title: string, dueDate: string, type: string, note: string) =>
     invoke<DeadlineDto>('create_deadline', { caseId, title, dueDate, type, note }),
   completeDeadline: (deadlineId: string) => invoke<void>('complete_deadline', { deadlineId }),
+  deleteDeadline: (deadlineId: string) => invoke<void>('delete_deadline', { deadlineId }),
 
   listDocuments: (caseId: string) => invoke<DocumentDto[]>('list_documents', { caseId }),
   readBinaryFile: (path: string) => invoke<number[]>('read_binary_file', { path }),
@@ -151,12 +153,17 @@ export const praxisApi = {
   listCorrespondence: (caseId: string) => invoke<CorrespondenceDto[]>('list_correspondence', { caseId }),
   createCorrespondence: (caseId: string, corrDate: string, richtung: string, von: string, betreff: string, typ: string) =>
     invoke<CorrespondenceDto>('create_correspondence', { caseId, corrDate, richtung, von, betreff, typ }),
+  deleteCorrespondence: (correspondenceId: string) => invoke<void>('delete_correspondence', { correspondenceId }),
 
   listBillingEntries: (caseId: string) => invoke<BillingEntryDto[]>('list_billing_entries', { caseId }),
   createBillingEntry: (caseId: string, entryDate: string, taetigkeit: string, minutes: number) =>
     invoke<BillingEntryDto>('create_billing_entry', { caseId, entryDate, taetigkeit, minutes }),
+  deleteBillingEntry: (billingId: string) => invoke<void>('delete_billing_entry', { billingId }),
 
   listDrafts: (caseId: string) => invoke<DraftDto[]>('list_drafts', { caseId }),
   createDraft: (caseId: string, titel: string, typ: string) => invoke<DraftDto>('create_draft', { caseId, titel, typ }),
   updateDraftContent: (draftId: string, content: string) => invoke<void>('update_draft_content', { draftId, content }),
+  exportDraftMarkdown: (draftId: string) => invoke<string>('export_draft_markdown', { draftId }),
+  exportDraftDocx: (draftId: string, path: string) => invoke<void>('export_draft_docx', { draftId, path }),
+  exportDraftPdf: (draftId: string, path: string) => invoke<void>('export_draft_pdf', { draftId, path }),
 };

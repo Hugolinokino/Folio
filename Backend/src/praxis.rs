@@ -767,6 +767,83 @@ pub fn update_draft_content(state: tauri::State<AppState>, draft_id: String, con
     Ok(())
 }
 
+fn fetch_draft_for_export(conn: &rusqlite::Connection, draft_id: &str) -> rusqlite::Result<(String, crate::documents::DocSection)> {
+    let (case_title, case_ref, draft_titel, content): (String, String, String, String) = conn.query_row(
+        "SELECT c.title, c.ref, d.titel, d.content FROM drafts d JOIN cases c ON c.id = d.case_id WHERE d.id = ?1",
+        rusqlite::params![draft_id],
+        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+    )?;
+    Ok((format!("{case_ref} — {case_title}"), crate::documents::DocSection { heading: draft_titel, body: content }))
+}
+
+#[tauri::command]
+pub fn export_draft_markdown(state: tauri::State<AppState>, draft_id: String) -> Result<String, String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    let (doc_title, section) = fetch_draft_for_export(conn, &draft_id).map_err(|e| e.to_string())?;
+    Ok(crate::documents::build_markdown(&doc_title, std::slice::from_ref(&section)))
+}
+
+#[tauri::command]
+pub fn export_draft_docx(state: tauri::State<AppState>, draft_id: String, path: String) -> Result<(), String> {
+    let (doc_title, section) = {
+        let guard = state.conn.lock().unwrap();
+        let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+        fetch_draft_for_export(conn, &draft_id).map_err(|e| e.to_string())?
+    };
+    crate::documents::write_docx(&doc_title, std::slice::from_ref(&section), &[], std::path::Path::new(&path))
+}
+
+#[tauri::command]
+pub fn export_draft_pdf(state: tauri::State<AppState>, draft_id: String, path: String) -> Result<(), String> {
+    let (doc_title, section) = {
+        let guard = state.conn.lock().unwrap();
+        let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+        fetch_draft_for_export(conn, &draft_id).map_err(|e| e.to_string())?
+    };
+    crate::documents::write_pdf(&doc_title, std::slice::from_ref(&section), &[], std::path::Path::new(&path))
+}
+
+// ============================================================
+// Deletes: deadlines, parties, correspondence, billing entries
+// ============================================================
+
+#[tauri::command]
+pub fn delete_deadline(state: tauri::State<AppState>, deadline_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM deadlines WHERE id = ?1", rusqlite::params![deadline_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_case_party(state: tauri::State<AppState>, party_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM case_parties WHERE id = ?1", rusqlite::params![party_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_correspondence(state: tauri::State<AppState>, correspondence_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM correspondence WHERE id = ?1", rusqlite::params![correspondence_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_billing_entry(state: tauri::State<AppState>, billing_id: String) -> Result<(), String> {
+    let guard = state.conn.lock().unwrap();
+    let conn = guard.as_ref().ok_or("Workspace is locked.")?;
+    conn.execute("DELETE FROM billing_entries WHERE id = ?1", rusqlite::params![billing_id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -22,8 +22,19 @@ const DEBOUNCE_MS = 500;
 
 const MENTION_RE = /[@#][^\s@#]*$/;
 
+/** Matches Swiss BGE references like "BGE 137 I 16". */
+const BGE_RE = /BGE\s?\d+\s?[IVX]+\s?\d+/g;
+/** Matches "Art. 97 OR", "Art. 41 Abs. 1 ZGB", "Art. 8 Abs. 2 lit. a BV" etc. — trailing 2–10 uppercase letters as the Erlass-Kürzel. */
+const ART_RE = /Art\.\s?\d+[a-z]?(?:\s?Abs\.\s?\d+)?(?:\s?(?:Ziff\.|lit\.)\s?[a-zA-Z0-9]+)?\s+[A-ZÄÖÜ]{2,10}\b/g;
+/** Any @Akte-mention already inserted into the draft text. */
+const AT_MENTION_RE = /@[^\s@#]+/;
+
+function dedupe(values: string[]): string[] {
+  return [...new Set(values.map((v) => v.replace(/\s+/g, ' ').trim()))];
+}
+
 export function Workbench({ fallId, entwurfId, onOpenFall }: WorkbenchProps) {
-  const { fall, loading, updateDraftContent } = useCaseWorkspace(fallId);
+  const { fall, loading, updateDraftContent, exportDraftDocx, exportDraftPdf } = useCaseWorkspace(fallId);
   const entwurf = fall?.entwuerfe.find((e) => e.id === entwurfId) ?? fall?.entwuerfe[0] ?? null;
 
   const [side, setSide] = useState<SideTab>('akten');
@@ -31,6 +42,7 @@ export function Workbench({ fallId, entwurfId, onOpenFall }: WorkbenchProps) {
   const [aktSearch, setAktSearch] = useState('');
   const [content, setContent] = useState('');
   const [mention, setMention] = useState<MentionState | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -122,6 +134,30 @@ export function Workbench({ fallId, entwurfId, onOpenFall }: WorkbenchProps) {
     return fall.fristen.filter((f) => f.titel.toLowerCase().includes(q)).slice(0, 8);
   }, [mention, fall]);
 
+  /** Deterministic regex scan of the live draft text — no AI, just pattern matching for BGE/Art.-citations. */
+  const rechtFunde = useMemo(() => ({
+    bge: dedupe(content.match(BGE_RE) || []),
+    art: dedupe(content.match(ART_RE) || []),
+  }), [content]);
+
+  /** Lücken-Check: paragraphs of substance (>40 chars) that cite no @Akte — mirrors Academia's Argument-ohne-Quelle check. */
+  const pruefAbschnitte = useMemo(() => {
+    return content
+      .split(/\n{2,}/)
+      .map((text, i) => ({ nr: i + 1, text: text.trim() }))
+      .filter((a) => a.text.length > 0);
+  }, [content]);
+  const pruefLuecken = pruefAbschnitte.filter((a) => a.text.length > 40 && !AT_MENTION_RE.test(a.text));
+
+  const handleExportDocx = () => {
+    setExportOpen(false);
+    if (entwurf) exportDraftDocx(entwurf.id, entwurf.titel);
+  };
+  const handleExportPdf = () => {
+    setExportOpen(false);
+    if (entwurf) exportDraftPdf(entwurf.id, entwurf.titel);
+  };
+
   if (loading && !fall) {
     return (
       <div className="detail view-in" style={{ padding: 40 }}>
@@ -158,11 +194,25 @@ export function Workbench({ fallId, entwurfId, onOpenFall }: WorkbenchProps) {
             <h1 className="fall-title">{entwurf.titel}<span className="ac">.</span></h1>
           </div>
         </div>
-        <div className="row-flex" style={{ gap: 8 }}>
+        <div className="row-flex" style={{ gap: 8, position: 'relative' }}>
           <button className="btn-ghost-glass" onClick={regenRubrum}><Icon name="grid" size={13} /> Rubrum aktualisieren</button>
-          <button className="btn-primary-dark"><Icon name="export" size={13} /> Export Word / PDF</button>
+          <button className="btn-primary-dark" onClick={() => setExportOpen((o) => !o)}><Icon name="export" size={13} /> Export Word / PDF</button>
+          {exportOpen && (
+            <div
+              style={{
+                position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 50,
+                background: 'var(--paper)', border: '1px solid var(--glass-border)', borderRadius: 12,
+                boxShadow: 'var(--sh-3)', padding: 6, display: 'flex', flexDirection: 'column', gap: 1, minWidth: 180,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="nav-i" onClick={handleExportDocx}><span className="ico"><Icon name="doc" size={14} /></span> Als Word (.docx)</div>
+              <div className="nav-i" onClick={handleExportPdf}><span className="ico"><Icon name="doc" size={14} /></span> Als PDF</div>
+            </div>
+          )}
         </div>
       </div>
+      {exportOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 5 }} onClick={() => setExportOpen(false)}></div>}
 
       <div className="wb-split">
         <div className="wb-paper scroll">
@@ -262,15 +312,45 @@ export function Workbench({ fallId, entwurfId, onOpenFall }: WorkbenchProps) {
 
           {side === 'recht' && (
             <div className="panel scroll" style={{ flex: 1, overflow: 'auto' }}>
-              <div className="t-mono-sm" style={{ marginBottom: 10 }}>Verknüpfte Rechtsprechung & Normen</div>
-              <p className="t-sans-sm">Verknüpfte Rechtsprechung folgt mit der Recherche-Integration.</p>
+              <div className="t-mono-sm" style={{ marginBottom: 4 }}>Bundesgerichtsentscheide</div>
+              <p className="t-sans-sm" style={{ marginBottom: 10, opacity: 0.7 }}>im Entwurf-Text gefunden</p>
+              <div className="col" style={{ gap: 2, marginBottom: 16 }}>
+                {rechtFunde.bge.map((c) => (
+                  <div key={c} className="wb-akt"><span className="od-t">{c}</span></div>
+                ))}
+                {rechtFunde.bge.length === 0 && <div className="t-sans-sm" style={{ padding: '2px 8px', opacity: 0.6 }}>Keine BGE-Zitate im Text (Format „BGE 137 I 16").</div>}
+              </div>
+
+              <div className="t-mono-sm" style={{ marginBottom: 4 }}>Gesetzesartikel</div>
+              <p className="t-sans-sm" style={{ marginBottom: 10, opacity: 0.7 }}>im Entwurf-Text gefunden</p>
+              <div className="col" style={{ gap: 2 }}>
+                {rechtFunde.art.map((c) => (
+                  <div key={c} className="wb-akt"><span className="od-t">{c}</span></div>
+                ))}
+                {rechtFunde.art.length === 0 && <div className="t-sans-sm" style={{ padding: '2px 8px', opacity: 0.6 }}>Keine Gesetzesartikel im Text (Format „Art. 97 OR").</div>}
+              </div>
             </div>
           )}
 
           {side === 'check' && (
             <div className="panel scroll" style={{ flex: 1, overflow: 'auto' }}>
-              <div className="t-mono-sm" style={{ marginBottom: 10 }}>Argumentationscheck gegen die Akten</div>
-              <p className="t-sans-sm">KI-Argumentationscheck folgt mit der Offline-KI-Integration.</p>
+              <div className="t-mono-sm" style={{ marginBottom: 4 }}>Lücken-Check: Absätze ohne Aktenbezug</div>
+              <p className="t-sans-sm" style={{ marginBottom: 10, opacity: 0.7 }}>
+                {pruefAbschnitte.length === 0
+                  ? 'Noch kein Text vorhanden.'
+                  : `${pruefLuecken.length} von ${pruefAbschnitte.length} Absätzen ohne @-Aktenverweis`}
+              </p>
+              <div className="col" style={{ gap: 8 }}>
+                {pruefLuecken.map((a) => (
+                  <div key={a.nr} className="panel" style={{ padding: '10px 12px' }}>
+                    <div className="t-mono-sm" style={{ marginBottom: 4 }}>Absatz {a.nr}</div>
+                    <p className="t-sans-sm" style={{ margin: 0 }}>{a.text.slice(0, 180)}{a.text.length > 180 ? '…' : ''}</p>
+                  </div>
+                ))}
+                {pruefAbschnitte.length > 0 && pruefLuecken.length === 0 && (
+                  <div className="t-sans-sm" style={{ padding: '2px 8px', opacity: 0.6 }}>Jeder Absatz verweist auf mindestens eine Akte.</div>
+                )}
+              </div>
             </div>
           )}
         </div>
