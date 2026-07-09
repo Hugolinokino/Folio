@@ -61,7 +61,6 @@ export function GovernanceHome({ onOpen }: { onOpen: (view: GovernanceViewId) =>
       <div className="home-inner">
         <div className="home-hero">
           <h1>Governance.</h1>
-          <p className="sub">{db.meta.mandat}{db.meta.rechtsform ? ` · ${db.meta.rechtsform}` : ''}</p>
         </div>
 
         <div className="home-sec">
@@ -90,7 +89,6 @@ export function GovernanceHome({ onOpen }: { onOpen: (view: GovernanceViewId) =>
               <div key={m.id} className="st-mod" onClick={() => onOpen(m.id)}>
                 <span className="sm-num">{m.num}</span>
                 <span className="sm-t">{m.titel}</span>
-                <span className="sm-d">{m.desc}</span>
                 <span className="sm-c">{moduleCount(m.id, db)}</span>
               </div>
             ))}

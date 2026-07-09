@@ -141,7 +141,6 @@ export function GvNormen({ onOpen }: { onOpen: (v: GovernanceViewId) => void }) 
             </div>
             <div className="panel" style={{ overflow: 'auto' }}>
               <div className="panel-head"><span className="title">Erlassprofil</span></div>
-              {!e && <p className="st-empty">Erlass im Baum anklicken, um die Details zu sehen.</p>}
               {e && (
                 <div className="ak-detail">
                   <div>
@@ -152,7 +151,7 @@ export function GvNormen({ onOpen }: { onOpen: (v: GovernanceViewId) => void }) 
                       <span className="st-pill dim">Stufe {e.stufe}</span>
                     </div>
                   </div>
-                  <div><div className="ad-sec">Ermächtigungsgrundlage</div><div className="ad-txt">{e.basis || 'Keine — der Erlass stützt sich auf keine Delegationsnorm.'}</div></div>
+                  <div><div className="ad-sec">Ermächtigungsgrundlage</div><div className="ad-txt">{e.basis || 'Keine'}</div></div>
                   <div><div className="ad-sec">Erlassorgan</div><div className="ad-txt">{e.organ || '—'}</div></div>
                   <div><div className="ad-sec">Revisionsstand</div><div className="ad-txt">{e.revision ? formatDateDe(e.revision) : '—'} · {e.artikel} Artikel</div></div>
                   {e.versionen.length > 0 && (

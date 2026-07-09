@@ -241,9 +241,6 @@ export function GvOrgane({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) =>
                 </div>
               </div>
             ))}
-            {db.organe.length > 0 && (
-              <p className="st-empty">Jedes Kästchen nennt die konstituierende Norm — Organe ohne Norm existieren governance-rechtlich nicht.</p>
-            )}
           </div>
         )}
 

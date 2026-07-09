@@ -194,7 +194,6 @@ export function GvNetz({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) => v
               </div>
               <div className="panel" style={{ overflow: 'auto' }}>
                 <div className="panel-head"><span className="title">{e ? `${e.kurz} — Verbindungen` : 'Verweise'}</span></div>
-                {!e && <p className="st-empty">Erlass im Graphen anklicken, um ein- und ausgehende Verweise mit Fundstellen zu sehen.</p>}
                 {e && (
                   <div className="ak-detail">
                     <div className="ad-name" style={{ fontSize: 16 }}>{e.titel}</div>
@@ -264,7 +263,7 @@ export function GvNetz({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) => v
               )}
               {impactErlass && (
                 <p className="st-empty" style={{ marginTop: 0 }}>
-                  Vor einer Revision von <b>{impactErlass.kurz}</b>: {impact.length === 0 ? 'kein Erlass hängt daran.' : `${impact.length} Erlass${impact.length > 1 ? 'e' : ''} betroffen.`}
+                  {impactErlass.kurz}: {impact.length} betroffen
                 </p>
               )}
               {impact.map((t) => {

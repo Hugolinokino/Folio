@@ -137,6 +137,13 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+/* #root has no intrinsic height of its own — without this, `.ws`'s
+   `height: 100%` resolves against an indefinite ancestor and is ignored
+   (computes to `auto`), so nothing below it is actually bounded to the
+   viewport. Content then grows past the window and gets silently clipped
+   by `body`'s `overflow: hidden` instead of scrolling inside `.home` /
+   `.ws-content` as intended — worse the smaller the window is. */
+#root { height: 100%; }
 body {
   font-family: var(--sans);
   color: var(--ink);
@@ -447,7 +454,15 @@ body {
   0%   { opacity: 0; transform: translateY(8px) scale(0.94); filter: blur(6px); }
   100% { opacity: 1; transform: translateY(0)   scale(1);    filter: blur(0); }
 }
-.bloom { animation: bloom 700ms var(--ease-out) both; }
+/* No `animation-fill-mode` here on purpose: with `both`/`forwards` the element
+   keeps a non-`none` `transform` forever after the (delay-less) animation
+   ends, which makes it a CSS containing block for its descendants — that
+   silently broke `position: fixed` children and, worse, interfered with
+   wheel-scroll hit-testing on the element's own `overflow-y: auto` in the
+   WKWebView. Dropping the fill-mode reverts `transform` to `none` the
+   instant the animation completes; visually identical since there's no
+   animation-delay to "fill backwards" into. */
+.bloom { animation: bloom 700ms var(--ease-out); }
 
 @keyframes blossom {
   0%   { opacity: 0; transform: scale(0.85); filter: blur(8px); }
@@ -826,7 +841,11 @@ body {
   position: absolute; inset: 0;
   transition: opacity 520ms var(--ease), transform 600ms var(--ease), filter 600ms var(--ease);
 }
-.view-in  { animation: blossom 640ms var(--ease-out) both; }
+/* No fill-mode — see the comment above `.bloom`. This is the one that broke
+   scrolling: every page (`.home`, `.detail`, …) carries `.view-in`, so a
+   lingering `transform` here silently killed wheel-scroll on every
+   Startseite/detail view in every workspace, not just Governance. */
+.view-in  { animation: blossom 640ms var(--ease-out); }
 
 /* Misc */
 .divider { height: 1px; background: var(--line-1); }

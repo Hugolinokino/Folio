@@ -236,7 +236,6 @@ export function GvSimulator({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId)
               )}
             </div>
           )}
-          {!rf && <p className="st-empty">Reform aus der Liste wählen oder eine neue erfassen.</p>}
         </div>
       </div>
     </div>
