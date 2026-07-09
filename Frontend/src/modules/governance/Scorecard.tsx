@@ -71,10 +71,10 @@ export function GvScorecard({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId)
       {addingDim && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 1 }} placeholder="Dimension (z.B. Transparenz)" value={dimForm.label} onChange={(ev) => setDimForm((f) => ({ ...f, label: ev.target.value }))} />
-            <input className="input" type="number" min={0} max={100} style={{ flex: '0 0 100px' }} placeholder="Score" value={dimForm.score} onChange={(ev) => setDimForm((f) => ({ ...f, score: ev.target.value }))} />
-            <input className="input" type="number" min={0} max={100} style={{ flex: '0 0 100px' }} placeholder="Vorjahr" value={dimForm.vorjahr} onChange={(ev) => setDimForm((f) => ({ ...f, vorjahr: ev.target.value }))} />
-            <input className="input" style={{ flex: 2 }} placeholder="Begründung" value={dimForm.note} onChange={(ev) => setDimForm((f) => ({ ...f, note: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Dimension (z.B. Transparenz)" value={dimForm.label} onChange={(ev) => setDimForm((f) => ({ ...f, label: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitDim()} />
+            <input className="input" type="number" min={0} max={100} style={{ flex: '0 0 100px' }} placeholder="Score" value={dimForm.score} onChange={(ev) => setDimForm((f) => ({ ...f, score: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitDim()} />
+            <input className="input" type="number" min={0} max={100} style={{ flex: '0 0 100px' }} placeholder="Vorjahr" value={dimForm.vorjahr} onChange={(ev) => setDimForm((f) => ({ ...f, vorjahr: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitDim()} />
+            <input className="input" style={{ flex: 2 }} placeholder="Begründung" value={dimForm.note} onChange={(ev) => setDimForm((f) => ({ ...f, note: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitDim()} />
             <button className="btn-primary-dark" onClick={submitDim}><Icon name="plus" size={13} /> Speichern</button>
           </div>
         </div>
@@ -141,7 +141,7 @@ export function GvScorecard({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId)
                 <option value="">Dimension …</option>
                 {db.scorecard.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
-              <input className="input" type="number" min={0} max={100} style={{ flex: '0 0 100px' }} placeholder="Wert" value={bmValue} onChange={(ev) => setBmValue(ev.target.value)} />
+              <input className="input" type="number" min={0} max={100} style={{ flex: '0 0 100px' }} placeholder="Wert" value={bmValue} onChange={(ev) => setBmValue(ev.target.value)} onKeyDown={(ev) => ev.key === 'Enter' && submitBenchmarkValue()} />
               <button className="btn-ghost-glass" onClick={submitBenchmarkValue}><Icon name="plus" size={13} /> Eintragen</button>
             </div>
           </div>

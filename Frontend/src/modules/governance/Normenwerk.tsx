@@ -98,9 +98,9 @@ export function GvNormen({ onOpen }: { onOpen: (v: GovernanceViewId) => void }) 
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="col" style={{ gap: 6 }}>
             <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-              <input className="input" style={{ flex: '0 0 90px' }} placeholder="Kürzel" value={form.kurz} onChange={(ev) => setForm((f) => ({ ...f, kurz: ev.target.value }))} />
-              <input className="input" style={{ flex: 2 }} placeholder="Titel" value={form.titel} onChange={(ev) => setForm((f) => ({ ...f, titel: ev.target.value }))} />
-              <input className="input" style={{ flex: 1 }} placeholder="Typ (z.B. Reglement)" value={form.typ} onChange={(ev) => setForm((f) => ({ ...f, typ: ev.target.value }))} />
+              <input className="input" style={{ flex: '0 0 90px' }} placeholder="Kürzel" value={form.kurz} onChange={(ev) => setForm((f) => ({ ...f, kurz: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
+              <input className="input" style={{ flex: 2 }} placeholder="Titel" value={form.titel} onChange={(ev) => setForm((f) => ({ ...f, titel: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
+              <input className="input" style={{ flex: 1 }} placeholder="Typ (z.B. Reglement)" value={form.typ} onChange={(ev) => setForm((f) => ({ ...f, typ: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
               <select className="input" style={{ flex: '0 0 130px' }} value={form.stufe} onChange={(ev) => setForm((f) => ({ ...f, stufe: ev.target.value }))}>
                 <option value="1">Stufe 1 · Grundlage</option>
                 <option value="2">Stufe 2 · Reglement</option>
@@ -113,14 +113,14 @@ export function GvNormen({ onOpen }: { onOpen: (v: GovernanceViewId) => void }) 
               </select>
             </div>
             <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-              <input className="input" style={{ flex: 1 }} placeholder="Erlassorgan" value={form.organ} onChange={(ev) => setForm((f) => ({ ...f, organ: ev.target.value }))} />
-              <input className="input" style={{ flex: 2 }} placeholder="Ermächtigungsgrundlage (z.B. Art. 21 ST)" value={form.basis} onChange={(ev) => setForm((f) => ({ ...f, basis: ev.target.value }))} />
+              <input className="input" style={{ flex: 1 }} placeholder="Erlassorgan" value={form.organ} onChange={(ev) => setForm((f) => ({ ...f, organ: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
+              <input className="input" style={{ flex: 2 }} placeholder="Ermächtigungsgrundlage (z.B. Art. 21 ST)" value={form.basis} onChange={(ev) => setForm((f) => ({ ...f, basis: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
               <select className="input" style={{ flex: 1 }} value={form.basisRef} onChange={(ev) => setForm((f) => ({ ...f, basisRef: ev.target.value }))}>
                 <option value="">— kein übergeordneter Erlass —</option>
                 {db.erlasse.map((x) => <option key={x.id} value={x.id}>{x.kurz} — {x.titel}</option>)}
               </select>
-              <input className="input" type="number" style={{ flex: '0 0 100px' }} placeholder="Artikel" value={form.artikel} onChange={(ev) => setForm((f) => ({ ...f, artikel: ev.target.value }))} />
-              <input className="input" type="date" style={{ flex: '0 0 150px' }} value={form.erlassDate} onChange={(ev) => setForm((f) => ({ ...f, erlassDate: ev.target.value }))} />
+              <input className="input" type="number" style={{ flex: '0 0 100px' }} placeholder="Artikel" value={form.artikel} onChange={(ev) => setForm((f) => ({ ...f, artikel: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
+              <input className="input" type="date" style={{ flex: '0 0 150px' }} value={form.erlassDate} onChange={(ev) => setForm((f) => ({ ...f, erlassDate: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
               <button className="btn-primary-dark" onClick={submit}><Icon name="plus" size={13} /> Speichern</button>
             </div>
           </div>

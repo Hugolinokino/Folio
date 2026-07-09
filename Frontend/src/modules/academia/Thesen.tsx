@@ -53,9 +53,9 @@ export function Thesen({ projectId, sources }: { projectId: string; sources: Sou
 
         {adding && (
           <div className="col" style={{ gap: 6, marginBottom: 16, padding: 10, background: 'var(--fill-1)', borderRadius: 10 }}>
-            <input className="input" placeholder="Behauptung / These" value={form.claim} onChange={(e) => setForm((f) => ({ ...f, claim: e.target.value }))} />
-            <input className="input" placeholder="Kurzzusammenfassung" value={form.summary} onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))} />
-            <input className="input" placeholder="Eigene Position" value={form.position} onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))} />
+            <input className="input" placeholder="Behauptung / These" value={form.claim} onChange={(e) => setForm((f) => ({ ...f, claim: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submitThesis()} />
+            <input className="input" placeholder="Kurzzusammenfassung" value={form.summary} onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submitThesis()} />
+            <input className="input" placeholder="Eigene Position" value={form.position} onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submitThesis()} />
             <button className="btn-primary-dark" style={{ alignSelf: 'flex-start' }} onClick={submitThesis}><Icon name="plus" size={13} /> These speichern</button>
           </div>
         )}

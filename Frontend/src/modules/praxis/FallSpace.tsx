@@ -519,8 +519,8 @@ function FallFristen({
         ))}
       </div>
       <div className="row-flex" style={{ gap: 8, flexWrap: 'wrap', padding: '14px 6px 4px', borderTop: '1px solid var(--line-1)', marginTop: 8 }}>
-        <input className="input" style={{ flex: 2 }} placeholder="Titel" value={titel} onChange={(e) => setTitel(e.target.value)} />
-        <input className="input" type="date" style={{ flex: '0 0 150px' }} value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        <input className="input" style={{ flex: 2 }} placeholder="Titel" value={titel} onChange={(e) => setTitel(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        <input className="input" type="date" style={{ flex: '0 0 150px' }} value={dueDate} onChange={(e) => setDueDate(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <select className="input" style={{ flex: '0 0 130px' }} value={art} onChange={(e) => setArt(e.target.value)}>
           <option value="behördlich">behördlich</option>
           <option value="gesetzlich">gesetzlich</option>
@@ -529,7 +529,7 @@ function FallFristen({
           <option value="gerichtlich">gerichtlich</option>
           <option value="termin">termin</option>
         </select>
-        <input className="input" style={{ flex: 2 }} placeholder="Notiz" value={note} onChange={(e) => setNote(e.target.value)} />
+        <input className="input" style={{ flex: 2 }} placeholder="Notiz" value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <button className="btn-primary-dark" onClick={submit}><Icon name="plus" size={13} /> Frist</button>
       </div>
     </div>
@@ -555,9 +555,9 @@ function FallChrono({ fall, addChronoEvent }: { fall: Fall; addChronoEvent: Work
         <span className="title">Sachverhalts-Chronologie</span>
       </div>
       <div className="row-flex" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        <input className="input" type="date" style={{ flex: '0 0 150px' }} value={datum} onChange={(e) => setDatum(e.target.value)} />
-        <input className="input" style={{ flex: 2 }} placeholder="Ereignis" value={ereignis} onChange={(e) => setEreignis(e.target.value)} />
-        <input className="input" style={{ flex: 1 }} placeholder="Beleg" value={beleg} onChange={(e) => setBeleg(e.target.value)} />
+        <input className="input" type="date" style={{ flex: '0 0 150px' }} value={datum} onChange={(e) => setDatum(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        <input className="input" style={{ flex: 2 }} placeholder="Ereignis" value={ereignis} onChange={(e) => setEreignis(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        <input className="input" style={{ flex: 1 }} placeholder="Beleg" value={beleg} onChange={(e) => setBeleg(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <button className="btn-primary-dark" onClick={submit}><Icon name="plus" size={13} /> Ergänzen</button>
       </div>
       <div className="chrono">
@@ -613,10 +613,10 @@ function FallPost({
           <option value="ein">ein</option>
           <option value="aus">aus</option>
         </select>
-        <input className="input" style={{ flex: 1 }} placeholder="Von / An" value={von} onChange={(e) => setVon(e.target.value)} />
-        <input className="input" style={{ flex: 2 }} placeholder="Betreff" value={betreff} onChange={(e) => setBetreff(e.target.value)} />
-        <input className="input" style={{ flex: 1 }} placeholder="Typ" value={typ} onChange={(e) => setTyp(e.target.value)} />
-        <input className="input" type="date" style={{ flex: '0 0 150px' }} value={datum} onChange={(e) => setDatum(e.target.value)} />
+        <input className="input" style={{ flex: 1 }} placeholder="Von / An" value={von} onChange={(e) => setVon(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        <input className="input" style={{ flex: 2 }} placeholder="Betreff" value={betreff} onChange={(e) => setBetreff(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        <input className="input" style={{ flex: 1 }} placeholder="Typ" value={typ} onChange={(e) => setTyp(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+        <input className="input" type="date" style={{ flex: '0 0 150px' }} value={datum} onChange={(e) => setDatum(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
         <button className="btn-primary-dark" onClick={submit}><Icon name="plus" size={13} /> Eintrag</button>
       </div>
       <div className="col" style={{ gap: 0 }}>
@@ -681,9 +681,9 @@ function FallHonorar({
       <div className="panel scroll" style={{ flex: 1, overflow: 'auto' }}>
         <div className="panel-head"><span className="title">Leistungserfassung</span></div>
         <div className="row-flex" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-          <input className="input" type="date" style={{ flex: '0 0 150px' }} value={datum} onChange={(e) => setDatum(e.target.value)} />
-          <input className="input" style={{ flex: 2 }} placeholder="Tätigkeit" value={taetigkeit} onChange={(e) => setTaetigkeit(e.target.value)} />
-          <input className="input" type="number" style={{ flex: '0 0 110px' }} placeholder="Minuten" value={minuten} onChange={(e) => setMinuten(e.target.value)} />
+          <input className="input" type="date" style={{ flex: '0 0 150px' }} value={datum} onChange={(e) => setDatum(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+          <input className="input" style={{ flex: 2 }} placeholder="Tätigkeit" value={taetigkeit} onChange={(e) => setTaetigkeit(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+          <input className="input" type="number" style={{ flex: '0 0 110px' }} placeholder="Minuten" value={minuten} onChange={(e) => setMinuten(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
           <button className="btn-primary-dark" onClick={submit}><Icon name="plus" size={13} /> Eintrag</button>
         </div>
         <div className="col">

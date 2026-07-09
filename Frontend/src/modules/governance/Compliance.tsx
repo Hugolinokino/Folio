@@ -54,14 +54,14 @@ export function GvCompliance({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId
       {addingKa && tab === 'kalender' && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 2 }} placeholder="Titel" value={kaForm.titel} onChange={(ev) => setKaForm((f) => ({ ...f, titel: ev.target.value }))} />
-            <input className="input" type="date" style={{ flex: '0 0 150px' }} value={kaForm.dueDate} onChange={(ev) => setKaForm((f) => ({ ...f, dueDate: ev.target.value }))} />
+            <input className="input" style={{ flex: 2 }} placeholder="Titel" value={kaForm.titel} onChange={(ev) => setKaForm((f) => ({ ...f, titel: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKalender()} />
+            <input className="input" type="date" style={{ flex: '0 0 150px' }} value={kaForm.dueDate} onChange={(ev) => setKaForm((f) => ({ ...f, dueDate: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKalender()} />
             <select className="input" style={{ flex: 1 }} value={kaForm.organ} onChange={(ev) => setKaForm((f) => ({ ...f, organ: ev.target.value }))}>
               <option value="">Organ …</option>
               {db.organe.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
-            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={kaForm.quelle} onChange={(ev) => setKaForm((f) => ({ ...f, quelle: ev.target.value }))} />
-            <input className="input" style={{ flex: '0 0 130px' }} placeholder="Rhythmus" value={kaForm.rhythmus} onChange={(ev) => setKaForm((f) => ({ ...f, rhythmus: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={kaForm.quelle} onChange={(ev) => setKaForm((f) => ({ ...f, quelle: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKalender()} />
+            <input className="input" style={{ flex: '0 0 130px' }} placeholder="Rhythmus" value={kaForm.rhythmus} onChange={(ev) => setKaForm((f) => ({ ...f, rhythmus: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKalender()} />
             <button className="btn-primary-dark" onClick={submitKalender}><Icon name="plus" size={13} /> Speichern</button>
           </div>
         </div>
@@ -70,10 +70,10 @@ export function GvCompliance({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId
       {addingIk && tab === 'konflikte' && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 1 }} placeholder="Rolle / Person" value={ikForm.rolle} onChange={(ev) => setIkForm((f) => ({ ...f, rolle: ev.target.value }))} />
-            <input className="input" style={{ flex: 2 }} placeholder="Konflikt" value={ikForm.konflikt} onChange={(ev) => setIkForm((f) => ({ ...f, konflikt: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Regel" value={ikForm.regel} onChange={(ev) => setIkForm((f) => ({ ...f, regel: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Offenlegung" value={ikForm.offenlegung} onChange={(ev) => setIkForm((f) => ({ ...f, offenlegung: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Rolle / Person" value={ikForm.rolle} onChange={(ev) => setIkForm((f) => ({ ...f, rolle: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKonflikt()} />
+            <input className="input" style={{ flex: 2 }} placeholder="Konflikt" value={ikForm.konflikt} onChange={(ev) => setIkForm((f) => ({ ...f, konflikt: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKonflikt()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Regel" value={ikForm.regel} onChange={(ev) => setIkForm((f) => ({ ...f, regel: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKonflikt()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Offenlegung" value={ikForm.offenlegung} onChange={(ev) => setIkForm((f) => ({ ...f, offenlegung: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKonflikt()} />
             <select className="input" style={{ flex: '0 0 130px' }} value={ikForm.status} onChange={(ev) => setIkForm((f) => ({ ...f, status: ev.target.value as KonfliktStatus }))}>
               <option value="aktiv">aktiv</option>
               <option value="prüfen">prüfen</option>

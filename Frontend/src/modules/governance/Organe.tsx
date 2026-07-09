@@ -113,13 +113,13 @@ export function GvOrgane({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) =>
       {addingKp && tab === 'matrix' && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 2 }} placeholder="Befugnis" value={kpForm.befugnis} onChange={(ev) => setKpForm((f) => ({ ...f, befugnis: ev.target.value }))} />
+            <input className="input" style={{ flex: 2 }} placeholder="Befugnis" value={kpForm.befugnis} onChange={(ev) => setKpForm((f) => ({ ...f, befugnis: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKompetenz()} />
             <select className="input" style={{ flex: 1 }} value={kpForm.organ} onChange={(ev) => setKpForm((f) => ({ ...f, organ: ev.target.value }))}>
               <option value="">Organ …</option>
               {db.organe.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
-            <input className="input" style={{ flex: 1 }} placeholder="Gestützt auf" value={kpForm.quelle} onChange={(ev) => setKpForm((f) => ({ ...f, quelle: ev.target.value }))} />
-            <input className="input" style={{ flex: '0 0 120px' }} placeholder="Quorum" value={kpForm.quorum} onChange={(ev) => setKpForm((f) => ({ ...f, quorum: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Gestützt auf" value={kpForm.quelle} onChange={(ev) => setKpForm((f) => ({ ...f, quelle: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKompetenz()} />
+            <input className="input" style={{ flex: '0 0 120px' }} placeholder="Quorum" value={kpForm.quorum} onChange={(ev) => setKpForm((f) => ({ ...f, quorum: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitKompetenz()} />
             <label className="row-flex" style={{ gap: 5, fontFamily: 'var(--sans)', fontSize: 12.5 }}>
               <input type="checkbox" checked={kpForm.luecke} onChange={(ev) => setKpForm((f) => ({ ...f, luecke: ev.target.checked }))} /> Lücke
             </label>
@@ -140,11 +140,11 @@ export function GvOrgane({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) =>
       {addingOg && tab === 'organigramm' && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 1 }} placeholder="Kürzel" value={ogForm.kurz} onChange={(ev) => setOgForm((f) => ({ ...f, kurz: ev.target.value }))} />
-            <input className="input" style={{ flex: 2 }} placeholder="Name" value={ogForm.name} onChange={(ev) => setOgForm((f) => ({ ...f, name: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Art (z.B. Aufsicht)" value={ogForm.art} onChange={(ev) => setOgForm((f) => ({ ...f, art: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={ogForm.quelle} onChange={(ev) => setOgForm((f) => ({ ...f, quelle: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Mitglieder" value={ogForm.mitglieder} onChange={(ev) => setOgForm((f) => ({ ...f, mitglieder: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Kürzel" value={ogForm.kurz} onChange={(ev) => setOgForm((f) => ({ ...f, kurz: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitOrgan()} />
+            <input className="input" style={{ flex: 2 }} placeholder="Name" value={ogForm.name} onChange={(ev) => setOgForm((f) => ({ ...f, name: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitOrgan()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Art (z.B. Aufsicht)" value={ogForm.art} onChange={(ev) => setOgForm((f) => ({ ...f, art: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitOrgan()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={ogForm.quelle} onChange={(ev) => setOgForm((f) => ({ ...f, quelle: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitOrgan()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Mitglieder" value={ogForm.mitglieder} onChange={(ev) => setOgForm((f) => ({ ...f, mitglieder: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitOrgan()} />
             <select className="input" style={{ flex: 1 }} value={ogForm.bericht} onChange={(ev) => setOgForm((f) => ({ ...f, bericht: ev.target.value }))}>
               <option value="">— oberstes Organ —</option>
               {db.organe.map((o) => <option key={o.id} value={o.id}>berichtet an {o.name}</option>)}
@@ -157,11 +157,11 @@ export function GvOrgane({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) =>
       {addingUs && tab === 'unterschriften' && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 1 }} placeholder="Zeichnungsberechtigt" value={usForm.wer} onChange={(ev) => setUsForm((f) => ({ ...f, wer: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Art (z.B. Kollektiv zu zweien)" value={usForm.art} onChange={(ev) => setUsForm((f) => ({ ...f, art: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Bereich" value={usForm.bereich} onChange={(ev) => setUsForm((f) => ({ ...f, bereich: ev.target.value }))} />
-            <input className="input" style={{ flex: '0 0 130px' }} placeholder="Limite" value={usForm.limite} onChange={(ev) => setUsForm((f) => ({ ...f, limite: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={usForm.quelle} onChange={(ev) => setUsForm((f) => ({ ...f, quelle: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Zeichnungsberechtigt" value={usForm.wer} onChange={(ev) => setUsForm((f) => ({ ...f, wer: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitUnterschrift()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Art (z.B. Kollektiv zu zweien)" value={usForm.art} onChange={(ev) => setUsForm((f) => ({ ...f, art: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitUnterschrift()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Bereich" value={usForm.bereich} onChange={(ev) => setUsForm((f) => ({ ...f, bereich: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitUnterschrift()} />
+            <input className="input" style={{ flex: '0 0 130px' }} placeholder="Limite" value={usForm.limite} onChange={(ev) => setUsForm((f) => ({ ...f, limite: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitUnterschrift()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={usForm.quelle} onChange={(ev) => setUsForm((f) => ({ ...f, quelle: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitUnterschrift()} />
             <button className="btn-primary-dark" onClick={submitUnterschrift}><Icon name="plus" size={13} /> Speichern</button>
           </div>
         </div>

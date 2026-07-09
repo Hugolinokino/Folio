@@ -80,8 +80,8 @@ export function GvProzesse({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) 
       {addingPz && tab === 'mapper' && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6 }}>
-            <input className="input" style={{ flex: 1 }} placeholder="Prozess-Titel" value={pzForm.titel} onChange={(ev) => setPzForm((f) => ({ ...f, titel: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Rechtsmittel (optional)" value={pzForm.rechtsmittel} onChange={(ev) => setPzForm((f) => ({ ...f, rechtsmittel: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Prozess-Titel" value={pzForm.titel} onChange={(ev) => setPzForm((f) => ({ ...f, titel: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitProzess()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Rechtsmittel (optional)" value={pzForm.rechtsmittel} onChange={(ev) => setPzForm((f) => ({ ...f, rechtsmittel: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitProzess()} />
             <button className="btn-primary-dark" onClick={submitProzess}><Icon name="plus" size={13} /> Speichern</button>
           </div>
         </div>
@@ -94,10 +94,10 @@ export function GvProzesse({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) 
               <option value="">Organ …</option>
               {db.organe.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
-            <input className="input" style={{ flex: 2 }} placeholder="Aktion" value={stepForm.aktion} onChange={(ev) => setStepForm((f) => ({ ...f, aktion: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Frist" value={stepForm.frist} onChange={(ev) => setStepForm((f) => ({ ...f, frist: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Quorum" value={stepForm.quorum} onChange={(ev) => setStepForm((f) => ({ ...f, quorum: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={stepForm.quelle} onChange={(ev) => setStepForm((f) => ({ ...f, quelle: ev.target.value }))} />
+            <input className="input" style={{ flex: 2 }} placeholder="Aktion" value={stepForm.aktion} onChange={(ev) => setStepForm((f) => ({ ...f, aktion: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitStep()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Frist" value={stepForm.frist} onChange={(ev) => setStepForm((f) => ({ ...f, frist: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitStep()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Quorum" value={stepForm.quorum} onChange={(ev) => setStepForm((f) => ({ ...f, quorum: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitStep()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={stepForm.quelle} onChange={(ev) => setStepForm((f) => ({ ...f, quelle: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitStep()} />
             <button className="btn-primary-dark" onClick={submitStep}><Icon name="plus" size={13} /> Speichern</button>
           </div>
         </div>
@@ -106,15 +106,15 @@ export function GvProzesse({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) 
       {addingCb && tab === 'checks' && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 1 }} placeholder="Bereich" value={cbForm.bereich} onChange={(ev) => setCbForm((f) => ({ ...f, bereich: ev.target.value }))} />
-            <input className="input" style={{ flex: 2 }} placeholder="Mechanismus" value={cbForm.mechanismus} onChange={(ev) => setCbForm((f) => ({ ...f, mechanismus: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Bereich" value={cbForm.bereich} onChange={(ev) => setCbForm((f) => ({ ...f, bereich: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitCheck()} />
+            <input className="input" style={{ flex: 2 }} placeholder="Mechanismus" value={cbForm.mechanismus} onChange={(ev) => setCbForm((f) => ({ ...f, mechanismus: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitCheck()} />
             <select className="input" style={{ flex: '0 0 130px' }} value={cbForm.status} onChange={(ev) => setCbForm((f) => ({ ...f, status: ev.target.value as CheckStatus }))}>
               <option value="vorhanden">vorhanden</option>
               <option value="teilweise">teilweise</option>
               <option value="fehlt">fehlt</option>
             </select>
-            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={cbForm.quelle} onChange={(ev) => setCbForm((f) => ({ ...f, quelle: ev.target.value }))} />
-            <input className="input" style={{ flex: 1 }} placeholder="Lücke (falls vorhanden)" value={cbForm.luecke} onChange={(ev) => setCbForm((f) => ({ ...f, luecke: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Quelle" value={cbForm.quelle} onChange={(ev) => setCbForm((f) => ({ ...f, quelle: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitCheck()} />
+            <input className="input" style={{ flex: 1 }} placeholder="Lücke (falls vorhanden)" value={cbForm.luecke} onChange={(ev) => setCbForm((f) => ({ ...f, luecke: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitCheck()} />
             <button className="btn-primary-dark" onClick={submitCheck}><Icon name="plus" size={13} /> Speichern</button>
           </div>
         </div>

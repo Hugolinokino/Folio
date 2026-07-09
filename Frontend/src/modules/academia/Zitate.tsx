@@ -73,8 +73,8 @@ export function Zitate({ projectId, sources }: { projectId: string; sources: Sou
             {sources.map((s) => <option key={s.id} value={s.id}>{s.citationKey}</option>)}
           </select>
           <input className="input" placeholder="Zitat-Text" value={form.text} onChange={(e) => setForm((f) => ({ ...f, text: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
-          <input className="input" placeholder="Cluster (Thema)" value={form.cluster} onChange={(e) => setForm((f) => ({ ...f, cluster: e.target.value }))} />
-          <input className="input" placeholder="Tag" value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value }))} />
+          <input className="input" placeholder="Cluster (Thema)" value={form.cluster} onChange={(e) => setForm((f) => ({ ...f, cluster: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+          <input className="input" placeholder="Tag" value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
           <button className="btn-ghost-glass" style={{ justifyContent: 'center' }} onClick={submit}><Icon name="plus" size={12} /> Zitat erfassen</button>
         </div>
       </div>

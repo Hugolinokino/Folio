@@ -149,7 +149,7 @@ export function GvNetz({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) => v
               <option value="">Nach Erlass …</option>
               {db.erlasse.map((x) => <option key={x.id} value={x.id}>{x.kurz}</option>)}
             </select>
-            <input className="input" style={{ flex: 2 }} placeholder="Fundstelle (z.B. Art. 4 GsR → Art. 7 FiR)" value={vwForm.label} onChange={(ev) => setVwForm((f) => ({ ...f, label: ev.target.value }))} />
+            <input className="input" style={{ flex: 2 }} placeholder="Fundstelle (z.B. Art. 4 GsR → Art. 7 FiR)" value={vwForm.label} onChange={(ev) => setVwForm((f) => ({ ...f, label: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitVerweis()} />
             <button className="btn-primary-dark" onClick={submitVerweis}><Icon name="plus" size={13} /> Speichern</button>
           </div>
         </div>
@@ -158,7 +158,7 @@ export function GvNetz({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) => v
       {addingBf && tab === 'check' && (
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 1 }} placeholder="Typ (z.B. Normkollision)" value={bfForm.typ} onChange={(ev) => setBfForm((f) => ({ ...f, typ: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Typ (z.B. Normkollision)" value={bfForm.typ} onChange={(ev) => setBfForm((f) => ({ ...f, typ: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitBefund()} />
             <select className="input" style={{ flex: '0 0 110px' }} value={bfForm.schwere} onChange={(ev) => setBfForm((f) => ({ ...f, schwere: ev.target.value as BefundSchwere }))}>
               <option value="hoch">hoch</option>
               <option value="mittel">mittel</option>
@@ -168,8 +168,8 @@ export function GvNetz({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId) => v
               <option value="">Betrifft Erlass …</option>
               {db.erlasse.map((x) => <option key={x.id} value={x.id}>{x.kurz}</option>)}
             </select>
-            <input className="input" style={{ flex: 1 }} placeholder="Fundstelle" value={bfForm.fund} onChange={(ev) => setBfForm((f) => ({ ...f, fund: ev.target.value }))} />
-            <input className="input" style={{ flex: 2 }} placeholder="Beschreibung" value={bfForm.text} onChange={(ev) => setBfForm((f) => ({ ...f, text: ev.target.value }))} />
+            <input className="input" style={{ flex: 1 }} placeholder="Fundstelle" value={bfForm.fund} onChange={(ev) => setBfForm((f) => ({ ...f, fund: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitBefund()} />
+            <input className="input" style={{ flex: 2 }} placeholder="Beschreibung" value={bfForm.text} onChange={(ev) => setBfForm((f) => ({ ...f, text: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitBefund()} />
             <button className="btn-primary-dark" onClick={submitBefund}><Icon name="plus" size={13} /> Speichern</button>
           </div>
         </div>

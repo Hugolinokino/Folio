@@ -92,7 +92,7 @@ export function GvSimulator({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId)
         <div className="panel" style={{ marginBottom: 14 }}>
           <div className="col" style={{ gap: 6 }}>
             <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
-              <input className="input" style={{ flex: 2 }} placeholder="Titel" value={form.titel} onChange={(ev) => setForm((f) => ({ ...f, titel: ev.target.value }))} />
+              <input className="input" style={{ flex: 2 }} placeholder="Titel" value={form.titel} onChange={(ev) => setForm((f) => ({ ...f, titel: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
               <select className="input" style={{ flex: '0 0 130px' }} value={form.aufwand} onChange={(ev) => setForm((f) => ({ ...f, aufwand: ev.target.value as ReformAufwand }))}>
                 <option value="tief">Aufwand tief</option>
                 <option value="mittel">Aufwand mittel</option>
@@ -104,8 +104,8 @@ export function GvSimulator({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId)
                 <option value="hoch">Wirkung hoch</option>
               </select>
             </div>
-            <input className="input" placeholder="These / Vorschlag" value={form.these} onChange={(ev) => setForm((f) => ({ ...f, these: ev.target.value }))} />
-            <input className="input" placeholder="Risiken (kommagetrennt)" value={form.risiken} onChange={(ev) => setForm((f) => ({ ...f, risiken: ev.target.value }))} />
+            <input className="input" placeholder="These / Vorschlag" value={form.these} onChange={(ev) => setForm((f) => ({ ...f, these: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
+            <input className="input" placeholder="Risiken (kommagetrennt)" value={form.risiken} onChange={(ev) => setForm((f) => ({ ...f, risiken: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submit()} />
             <div className="row-flex" style={{ gap: 6, flexWrap: 'wrap' }}>
               <select className="input" multiple style={{ flex: 1, minHeight: 70 }} value={erlasseSel} onChange={(ev) => setErlasseSel(selectedOptions(ev.target))}>
                 {db.erlasse.map((e) => <option key={e.id} value={e.id}>{e.kurz} — {e.titel}</option>)}
@@ -154,7 +154,7 @@ export function GvSimulator({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId)
                       <option value="">Organ …</option>
                       {db.organe.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                     </select>
-                    <input className="input" style={{ flex: 2 }} placeholder="Schritt" value={stepForm.schritt} onChange={(ev) => setStepForm((f) => ({ ...f, schritt: ev.target.value }))} />
+                    <input className="input" style={{ flex: 2 }} placeholder="Schritt" value={stepForm.schritt} onChange={(ev) => setStepForm((f) => ({ ...f, schritt: ev.target.value }))} onKeyDown={(ev) => ev.key === 'Enter' && submitStep()} />
                     <button className="btn-ghost-glass" onClick={submitStep}><Icon name="plus" size={12} /></button>
                   </div>
                 )}
@@ -207,7 +207,7 @@ export function GvSimulator({ onOpen: _onOpen }: { onOpen: (v: GovernanceViewId)
                       <option value="">Dimension …</option>
                       {db.scorecard.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
                     </select>
-                    <input className="input" type="number" style={{ flex: '0 0 90px' }} placeholder="Δ" value={deltaVal} onChange={(ev) => setDeltaVal(ev.target.value)} />
+                    <input className="input" type="number" style={{ flex: '0 0 90px' }} placeholder="Δ" value={deltaVal} onChange={(ev) => setDeltaVal(ev.target.value)} onKeyDown={(ev) => ev.key === 'Enter' && submitDelta()} />
                     <button className="btn-ghost-glass" onClick={submitDelta}><Icon name="plus" size={12} /></button>
                   </div>
                 )}

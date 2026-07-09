@@ -128,7 +128,7 @@ function ProjectUebersicht({ ws, goTab, projectId }: { ws: Workspace; goTab: (ta
           </div>
           <div className="row-flex" style={{ gap: 6, marginTop: 10 }}>
             <input className="input" style={{ flex: 1 }} placeholder="Neue Aufgabe …" value={newTask} onChange={(e) => setNewTask(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitTask()} />
-            <input className="input" type="date" style={{ flex: '0 0 140px' }} value={newTaskDue} onChange={(e) => setNewTaskDue(e.target.value)} />
+            <input className="input" type="date" style={{ flex: '0 0 140px' }} value={newTaskDue} onChange={(e) => setNewTaskDue(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitTask()} />
             <button className="btn-ghost-glass" onClick={submitTask}><Icon name="plus" size={12} /></button>
           </div>
         </div>
@@ -175,7 +175,7 @@ function ProjectUebersicht({ ws, goTab, projectId }: { ws: Workspace; goTab: (ta
           </div>
           <div className="row-flex" style={{ gap: 6, marginTop: 10 }}>
             <input className="input" style={{ flex: 1 }} placeholder="Meilenstein …" value={newMilestone} onChange={(e) => setNewMilestone(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitMilestone()} />
-            <input className="input" type="date" style={{ flex: '0 0 140px' }} value={newMilestoneDate} onChange={(e) => setNewMilestoneDate(e.target.value)} />
+            <input className="input" type="date" style={{ flex: '0 0 140px' }} value={newMilestoneDate} onChange={(e) => setNewMilestoneDate(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitMilestone()} />
             <button className="btn-ghost-glass" onClick={submitMilestone}><Icon name="plus" size={12} /></button>
           </div>
         </div>
@@ -324,13 +324,13 @@ function ProjectBibliothek({ ws }: { ws: Workspace }) {
               <select className="input" style={{ flex: '0 0 120px' }} value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
                 {SOURCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
-              <input className="input" style={{ flex: 2 }} placeholder="Titel" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
-              <input className="input" style={{ flex: 1 }} placeholder="Autor" value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} />
-              <input className="input" type="number" style={{ flex: '0 0 90px' }} placeholder="Jahr" value={form.year} onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))} />
-              <input className="input" style={{ flex: 1 }} placeholder="Zitat-Key" value={form.citationKey} onChange={(e) => setForm((f) => ({ ...f, citationKey: e.target.value }))} />
-              <input className="input" style={{ flex: 1 }} placeholder="Auflage (z.B. 4.)" value={form.edition} onChange={(e) => setForm((f) => ({ ...f, edition: e.target.value }))} />
-              <input className="input" style={{ flex: 1 }} placeholder="Ort" value={form.place} onChange={(e) => setForm((f) => ({ ...f, place: e.target.value }))} />
-              <input className="input" style={{ flex: 2 }} placeholder="Anmerkung" value={form.annotation} onChange={(e) => setForm((f) => ({ ...f, annotation: e.target.value }))} />
+              <input className="input" style={{ flex: 2 }} placeholder="Titel" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+              <input className="input" style={{ flex: 1 }} placeholder="Autor" value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+              <input className="input" type="number" style={{ flex: '0 0 90px' }} placeholder="Jahr" value={form.year} onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+              <input className="input" style={{ flex: 1 }} placeholder="Zitat-Key" value={form.citationKey} onChange={(e) => setForm((f) => ({ ...f, citationKey: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+              <input className="input" style={{ flex: 1 }} placeholder="Auflage (z.B. 4.)" value={form.edition} onChange={(e) => setForm((f) => ({ ...f, edition: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+              <input className="input" style={{ flex: 1 }} placeholder="Ort" value={form.place} onChange={(e) => setForm((f) => ({ ...f, place: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+              <input className="input" style={{ flex: 2 }} placeholder="Anmerkung" value={form.annotation} onChange={(e) => setForm((f) => ({ ...f, annotation: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && submit()} />
               <button className="btn-primary-dark" onClick={submit}><Icon name="plus" size={13} /> Speichern</button>
             </div>
           </div>
