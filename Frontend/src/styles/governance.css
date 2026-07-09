@@ -1,0 +1,145 @@
+/* ============================================
+   GOVERNANCE — zusätzliche Styles
+   Baut auf styles.css / praxis.css / strategie.css auf
+   ============================================ */
+
+/* ---------- Normenwerk: Normhierarchie-Baum ---------- */
+.nw-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; flex: 1; min-height: 0; }
+.nw-tree { border: 1px solid var(--glass-border); border-radius: 16px; background: var(--glass-bg-2); box-shadow: var(--sh-1); padding: 20px; overflow: auto; min-height: 440px; }
+.nw-root { display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 10px; background: var(--fill-2); margin-bottom: 14px; }
+.nw-root .nn-k { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink-3); }
+.nw-root .nn-t { font-family: var(--sans); font-size: 12px; color: var(--ink-4); }
+.nw-children { display: flex; flex-direction: column; gap: 8px; padding-left: 22px; border-left: 1px dashed var(--line-2); margin-left: 8px; }
+.nw-wrap > .nw-tree > .nw-children { margin-left: 0; padding-left: 0; border-left: none; }
+.nw-branch { display: flex; flex-direction: column; gap: 8px; }
+.nw-node { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line-1); background: var(--fill-1); cursor: pointer; transition: all 150ms var(--ease); }
+.nw-node:hover { background: var(--fill-2); }
+.nw-node.on { border-color: color-mix(in oklch, var(--accent) 40%, transparent); background: var(--accent-soft); }
+.nw-node.bad { border-color: color-mix(in oklch, #c0392b 45%, transparent); }
+.nw-node .nn-k { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink-2); flex-shrink: 0; }
+.nw-node .nn-t { font-family: var(--serif); font-size: 14px; color: var(--ink); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nw-node .nn-b { font-family: var(--sans); font-size: 10.5px; color: var(--ink-4); white-space: nowrap; }
+.nw-node .ab { opacity: 0; transition: opacity 150ms; flex-shrink: 0; }
+.nw-node:hover .ab { opacity: 1; }
+.nw-ver { display: flex; gap: 8px; padding: 4px 0; font-family: var(--sans); font-size: 12px; }
+.nw-ver .nv-d { font-family: var(--mono); font-size: 10px; color: var(--ink-4); white-space: nowrap; }
+.nw-ver .nv-h { color: var(--ink-3); }
+
+/* ---------- Erlass-Register (table) ---------- */
+.gv-reg-row { display: grid; grid-template-columns: 60px minmax(0, 1.6fr) 110px 130px 150px 100px 140px 30px; gap: 10px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--line-1); }
+.gv-reg-row:first-child { border-top: none; }
+.gv-reg-row.gv-reg-head { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4); padding-top: 12px; padding-bottom: 12px; cursor: default; }
+.gv-reg-row:not(.gv-reg-head) { cursor: pointer; }
+.gv-reg-row:not(.gv-reg-head):hover { background: var(--fill-1); }
+.gv-reg-row.on { background: var(--accent-soft); }
+.gv-reg-row .rg-k { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink-2); }
+.gv-reg-row .rg-t { font-family: var(--serif); font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gv-reg-row .rg-m { font-family: var(--sans); font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Befunde / Checks / Konflikte (shared row) ---------- */
+.gv-bf-row { display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-top: 1px solid var(--line-1); }
+.gv-bf-row:first-child { border-top: none; }
+.gv-bf-row .bf-t { font-family: var(--serif); font-size: 14.5px; color: var(--ink); line-height: 1.4; }
+.gv-bf-row .bf-x { font-family: var(--sans); font-size: 12px; color: var(--ink-3); line-height: 1.4; }
+
+/* ---------- Verweisnetz: Kanten-Liste ---------- */
+.vn-edge { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-radius: 8px; cursor: pointer; }
+.vn-edge:hover { background: var(--fill-1); }
+.vn-edge .vn-art { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-4); border: 1px solid var(--line-2); border-radius: 5px; padding: 2px 6px; flex-shrink: 0; }
+.vn-edge .vn-art.bad { color: #c0392b; border-color: color-mix(in oklch, #c0392b 45%, transparent); }
+.vn-edge .vn-l { font-family: var(--sans); font-size: 12.5px; color: var(--ink-2); flex: 1; min-width: 0; }
+
+/* ---------- Kompetenzmatrix / Unterschriften ---------- */
+.gv-kp-row { display: grid; grid-template-columns: minmax(0, 1.4fr) 200px minmax(0, 1fr) 130px 30px; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line-1); }
+.gv-kp-row:first-child { border-top: none; }
+.gv-kp-row.gv-kp-head { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-4); cursor: default; }
+.gv-kp-row.bad { background: color-mix(in oklch, #c0392b 6%, transparent); }
+.gv-kp-row .kp-b { font-family: var(--serif); font-size: 14px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.gv-kp-row .kp-flag { font-family: var(--mono); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; background: #c0392b; color: #fff; padding: 1px 6px; border-radius: 4px; }
+.gv-kp-row .kp-o { font-family: var(--sans); font-size: 12.5px; color: var(--ink-2); }
+.gv-kp-row .kp-q { font-family: var(--sans); font-size: 11.5px; color: var(--ink-4); }
+.gv-kp-row .kp-q.warn { color: #c0392b; }
+.gv-kp-row .kp-m { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+
+/* ---------- RACI-Matrix ---------- */
+.gv-raci { display: grid; grid-template-columns: minmax(160px, 1fr) repeat(var(--cols), 56px); }
+.gv-raci .rc-cell { display: flex; align-items: center; justify-content: center; padding: 10px 8px; border-top: 1px solid var(--line-1); border-left: 1px solid var(--line-1); font-family: var(--sans); font-size: 12.5px; color: var(--ink-2); }
+.gv-raci .rc-cell:first-child { border-left: none; }
+.gv-raci .rc-cell.rc-head { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--ink-4); border-top: none; font-weight: 600; }
+.gv-raci .rc-cell.rc-p { justify-content: flex-start; font-family: var(--serif); font-size: 13.5px; color: var(--ink); gap: 8px; }
+.gv-raci .rc-cell.rc-p.bad { background: color-mix(in oklch, #c0392b 6%, transparent); }
+.gv-raci .rc-cell.rc-v { cursor: pointer; font-family: var(--mono); font-weight: 600; color: var(--ink-4); user-select: none; }
+.gv-raci .rc-cell.rc-v:hover { background: var(--fill-1); }
+.gv-raci .rc-cell.rc-v.r { color: var(--accent); }
+.gv-raci .rc-cell.rc-v.a { color: var(--paper); background: var(--ink); }
+
+.gv-lg { display: inline-flex; align-items: center; gap: 6px; font-family: var(--sans); font-size: 12px; color: var(--ink-3); }
+.gv-lg b { font-family: var(--mono); width: 18px; height: 18px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; background: var(--fill-2); color: var(--ink-3); font-size: 10px; font-weight: 600; }
+.gv-lg b.r { background: var(--accent-soft); color: var(--accent); }
+.gv-lg b.a { background: var(--ink); color: var(--paper); }
+.gv-lg .sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.gv-lg .sw.me { background: var(--accent); }
+.gv-lg .sw.bm { background: var(--ink-3); }
+.gv-lg .sw.vj { background: var(--ink-5); border: 1px solid var(--line-3); }
+
+/* ---------- Organigramm (generiert aus bericht-Kette) ---------- */
+.gv-org { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 20px 0; }
+.gv-org-row { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.gv-org-line { width: 1px; height: 24px; background: var(--line-2); align-self: center; }
+.gv-org-box { display: flex; flex-direction: column; gap: 3px; padding: 14px 22px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--glass-bg-2); box-shadow: var(--sh-1); min-width: 200px; align-items: center; text-align: center; }
+.gv-org-box.top { border-color: color-mix(in oklch, var(--accent) 35%, transparent); }
+.gv-org-box .ob-n { font-family: var(--serif); font-size: 15.5px; font-weight: 500; color: var(--ink); }
+.gv-org-box .ob-a { font-family: var(--sans); font-size: 11px; color: var(--ink-3); }
+.gv-org-box .ob-m { font-family: var(--mono); font-size: 10px; color: var(--ink-4); }
+
+/* ---------- Prozess-Mapper / Reform-Beschlussweg ---------- */
+.gv-step { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; }
+.gv-step .gs-rail { display: flex; flex-direction: column; align-items: center; }
+.gv-step .gs-num { width: 22px; height: 22px; border-radius: 50%; background: var(--fill-2); border: 1px solid var(--line-2); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); flex-shrink: 0; }
+.gv-step .gs-line { flex: 1; width: 1px; background: var(--line-2); margin: 4px 0; }
+.gv-step .gs-body { display: flex; flex-direction: column; gap: 3px; padding-bottom: 16px; min-width: 0; }
+.gv-step .gs-head { display: flex; align-items: center; gap: 8px; }
+.gv-step .gs-org { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-4); }
+.gv-step .gs-a { font-family: var(--serif); font-size: 14.5px; color: var(--ink); line-height: 1.4; }
+.gv-step .gs-m { font-family: var(--sans); font-size: 11px; color: var(--ink-4); }
+.gv-rechtsmittel { margin-top: 6px; padding: 10px 12px; border-radius: 10px; background: var(--fill-1); border: 1px dashed var(--line-2); font-family: var(--sans); font-size: 12px; color: var(--ink-3); }
+.gv-rechtsmittel b { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-4); margin-right: 6px; }
+
+/* ---------- Scorecard ---------- */
+.gv-sc-total { display: flex; align-items: center; gap: 16px; padding: 18px 22px; }
+.gv-sc-total .sct-v { font-family: var(--serif); font-size: 36px; font-weight: 500; color: var(--accent); }
+.gv-sc-total .sct-l { font-family: var(--sans); font-size: 13px; color: var(--ink); }
+.gv-sc-total .sct-s { font-family: var(--mono); font-size: 10.5px; color: var(--ink-4); }
+
+.gv-sc-row { padding: 14px 0; border-top: 1px solid var(--line-1); }
+.gv-sc-row:first-child { border-top: none; }
+.gv-sc-row .scr-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.gv-sc-row .scr-l { font-family: var(--serif); font-size: 15px; color: var(--ink); flex: 1; min-width: 0; }
+.gv-sc-row .scr-v { font-family: var(--mono); font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+.gv-sc-row .scr-v i { font-size: 10px; color: var(--ink-5); font-style: normal; }
+.gv-sc-row .scr-v b { font-size: 10px; font-weight: 600; }
+.gv-sc-row .scr-v b.up { color: var(--accent); }
+.gv-sc-row .scr-v b.dn { color: #c0392b; }
+.gv-sc-row .scr-n { font-family: var(--sans); font-size: 11.5px; color: var(--ink-4); margin-top: 6px; display: block; }
+
+.scr-bar { position: relative; height: 6px; border-radius: 3px; background: var(--fill-2); display: block; }
+.scr-bar i.me { position: absolute; inset: 0; border-radius: 3px; background: var(--accent); }
+.scr-bar i.plus { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: color-mix(in oklch, var(--accent) 45%, transparent); }
+.scr-bar .tick { position: absolute; top: -3px; width: 2px; height: 12px; border-radius: 1px; transform: translateX(-1px); }
+.scr-bar .tick.vj { background: var(--ink-5); }
+.scr-bar .tick.bm { background: var(--ink-3); }
+
+/* ---------- Reform-Simulator: Score-Delta ---------- */
+.gv-delta { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+.gv-delta .gd-l { font-family: var(--sans); font-size: 12px; color: var(--ink-3); width: 130px; flex-shrink: 0; }
+.gv-delta .gd-v { font-family: var(--mono); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.gv-delta .gd-v b { color: var(--accent); }
+
+@media (max-width: 1280px) {
+  .nw-wrap { grid-template-columns: minmax(0, 1fr) 280px; }
+}
+@media (max-width: 1000px) {
+  .nw-wrap { grid-template-columns: minmax(0, 1fr); }
+  .gv-reg-row { grid-template-columns: 50px minmax(0, 1fr) 90px 30px; }
+  .gv-reg-row > :nth-child(4), .gv-reg-row > :nth-child(5), .gv-reg-row > :nth-child(6) { display: none; }
+}

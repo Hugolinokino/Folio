@@ -11,6 +11,7 @@ const MIGRATIONS: &[(i32, &str)] = &[
     (4, include_str!("../../Database/migrations/0004_academia_writing.sql")),
     (5, include_str!("../../Database/migrations/0005_academia_boards.sql")),
     (6, include_str!("../../Database/migrations/0006_source_details.sql")),
+    (7, include_str!("../../Database/migrations/0007_governance.sql")),
 ];
 
 pub fn db_path(app_data_dir: &Path) -> PathBuf {

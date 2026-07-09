@@ -22,13 +22,25 @@ import { Execution } from '../modules/strategie/Execution';
 import { Journal } from '../modules/strategie/Journal';
 import { ST_MODULES, strategieMeta, type StrategieViewId } from '../lib/strategie/modules';
 import { exportJson, exportMarkdown } from '../lib/strategie/export';
+import { GovernanceProvider, useGovernance } from '../lib/governance/store';
+import { GovernanceHome } from '../modules/governance/GovernanceHome';
+import { GvNormen } from '../modules/governance/Normenwerk';
+import { GvNetz } from '../modules/governance/Verweisnetz';
+import { GvOrgane } from '../modules/governance/Organe';
+import { GvProzesse } from '../modules/governance/Prozesse';
+import { GvCompliance } from '../modules/governance/Compliance';
+import { GvScorecard } from '../modules/governance/Scorecard';
+import { GvSimulator } from '../modules/governance/Simulator';
+import { GV_MODULES, governanceMeta, type GovernanceViewId } from '../lib/governance/modules';
+import { exportJson as exportGvJson, exportMarkdown as exportGvMarkdown } from '../lib/governance/export';
 
-type Mode = 'praxis' | 'academia' | 'strategie';
+type Mode = 'praxis' | 'academia' | 'strategie' | 'governance';
 
 const MODE_ICON: Record<Mode, IconName> = {
   praxis: 'scales',
   academia: 'book',
   strategie: 'flag',
+  governance: 'grid',
 };
 
 const ST_VIEW_COMP: Record<StrategieViewId, (props: { onOpen: (v: StrategieViewId) => void }) => React.JSX.Element> = {
@@ -42,14 +54,27 @@ const ST_VIEW_COMP: Record<StrategieViewId, (props: { onOpen: (v: StrategieViewI
   's-journal': Journal,
 };
 
+const GV_VIEW_COMP: Record<GovernanceViewId, (props: { onOpen: (v: GovernanceViewId) => void }) => React.JSX.Element> = {
+  'g-home': GovernanceHome,
+  'g-normen': GvNormen,
+  'g-netz': GvNetz,
+  'g-organe': GvOrgane,
+  'g-prozesse': GvProzesse,
+  'g-compliance': GvCompliance,
+  'g-scorecard': GvScorecard,
+  'g-simulator': GvSimulator,
+};
+
 export function Shell() {
   return (
     <StrategieProvider>
-      <CaseListProvider>
-        <ProjectListProvider>
-          <ShellInner />
-        </ProjectListProvider>
-      </CaseListProvider>
+      <GovernanceProvider>
+        <CaseListProvider>
+          <ProjectListProvider>
+            <ShellInner />
+          </ProjectListProvider>
+        </CaseListProvider>
+      </GovernanceProvider>
     </StrategieProvider>
   );
 }
@@ -77,6 +102,11 @@ function ShellInner() {
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [projectInitTab, setProjectInitTab] = useState<Record<string, string>>({});
   const { projects } = useProjectList();
+
+  const [gvView, setGvView] = useState<GovernanceViewId>('g-home');
+  const [gvTabs, setGvTabs] = useState<GovernanceViewId[]>(['g-home']);
+  const [gvSwitchOpen, setGvSwitchOpen] = useState(false);
+  const [newMandat, setNewMandat] = useState('');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -113,6 +143,22 @@ function ShellInner() {
         setStView(nt[Math.min(idx, nt.length - 1)] || 's-home');
       }
       return nt.length ? nt : ['s-home'];
+    });
+  };
+
+  const openGvView = (v: GovernanceViewId) => {
+    setGvView(v);
+    setGvTabs((t) => (t.includes(v) ? t : [...t, v]));
+  };
+  const closeGvTab = (e: React.MouseEvent, v: GovernanceViewId) => {
+    e.stopPropagation();
+    setGvTabs((t) => {
+      const nt = t.filter((x) => x !== v);
+      if (gvView === v) {
+        const idx = t.indexOf(v);
+        setGvView(nt[Math.min(idx, nt.length - 1)] || 'g-home');
+      }
+      return nt.length ? nt : ['g-home'];
     });
   };
 
@@ -196,6 +242,10 @@ function ShellInner() {
   const renderContent = () => {
     if (mode === 'praxis') return renderPraxis();
     if (mode === 'academia') return renderAcademia();
+    if (mode === 'governance') {
+      const GvComp = GV_VIEW_COMP[gvView];
+      return <GvComp onOpen={openGvView} />;
+    }
     const Comp = ST_VIEW_COMP[stView];
     return <Comp onOpen={openStView} />;
   };
@@ -219,6 +269,7 @@ function ShellInner() {
             <span className={mode === 'praxis' ? 'on' : ''} onClick={() => setMode('praxis')}>Praxis</span>
             <span className={mode === 'academia' ? 'on' : ''} onClick={() => setMode('academia')}>Academia</span>
             <span className={mode === 'strategie' ? 'on' : ''} onClick={() => setMode('strategie')}>Strategie</span>
+            <span className={mode === 'governance' ? 'on' : ''} onClick={() => setMode('governance')}>Governance</span>
           </div>
 
           {mode === 'strategie' ? (
@@ -228,6 +279,14 @@ function ShellInner() {
               newVorhaben={newVorhaben}
               setNewVorhaben={setNewVorhaben}
               onOpenHome={() => openStView('s-home')}
+            />
+          ) : mode === 'governance' ? (
+            <GovernanceSwitcher
+              open={gvSwitchOpen}
+              setOpen={setGvSwitchOpen}
+              newMandat={newMandat}
+              setNewMandat={setNewMandat}
+              onOpenHome={() => openGvView('g-home')}
             />
           ) : mode === 'praxis' ? (
             <PraxisSwitcher
@@ -273,6 +332,22 @@ function ShellInner() {
                 ))}
 
                 <StrategieExportNav />
+              </>
+            ) : mode === 'governance' ? (
+              <>
+                <div className={`nav-i ${gvView === 'g-home' ? 'on' : ''}`} onClick={() => openGvView('g-home')}>
+                  <span className="ico"><Icon name="home" size={16} /></span> Startseite
+                </div>
+
+                <div className="side-label">Werkbank</div>
+                {GV_MODULES.map((m) => (
+                  <div key={m.id} className={`nav-i ${gvView === m.id ? 'on' : ''}`} onClick={() => openGvView(m.id)}>
+                    <span className="ico"><span style={{ fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '0.04em' }}>{m.num}</span></span>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.titel}</span>
+                  </div>
+                ))}
+
+                <GovernanceExportNav />
               </>
             ) : mode === 'praxis' ? (
               <>
@@ -377,6 +452,19 @@ function ShellInner() {
                     <span className="tt">{meta.label}</span>
                     {v !== 'a-home' && (
                       <span className="x" onClick={(e) => closeAcTab(e, v)}><Icon name="close" size={12} /></span>
+                    )}
+                  </div>
+                );
+              })
+            ) : mode === 'governance' ? (
+              gvTabs.map((v) => {
+                const meta = governanceMeta(v);
+                return (
+                  <div key={v} className={`doc-tab ${gvView === v ? 'on' : ''}`} onClick={() => setGvView(v)}>
+                    <span className="ico"><Icon name={meta.icon} size={14} /></span>
+                    <span className="tt">{meta.label}</span>
+                    {v !== 'g-home' && (
+                      <span className="x" onClick={(e) => closeGvTab(e, v)}><Icon name="close" size={12} /></span>
                     )}
                   </div>
                 );
@@ -683,6 +771,88 @@ function StrategieExportNav() {
         <span className="ico"><Icon name="export" size={15} /></span> Markdown (Obsidian)
       </div>
       <div className="nav-i" onClick={() => exportJson(data)}>
+        <span className="ico"><Icon name="export" size={15} /></span> JSON-Datenstand
+      </div>
+    </>
+  );
+}
+
+function GovernanceSwitcher({
+  open,
+  setOpen,
+  newMandat,
+  setNewMandat,
+  onOpenHome,
+}: {
+  open: boolean;
+  setOpen: (fn: (o: boolean) => boolean) => void;
+  newMandat: string;
+  setNewMandat: (v: string) => void;
+  onOpenHome: () => void;
+}) {
+  const { workspaces, currentId, switchWorkspace, createWorkspace, renameWorkspace, deleteWorkspace } = useGovernance();
+  const current = workspaces.find((w) => w.id === currentId);
+
+  const create = () => {
+    const name = newMandat.trim();
+    if (!name) return;
+    createWorkspace(name, '').then(onOpenHome);
+    setNewMandat('');
+    setOpen(() => false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteWorkspace(id);
+    onOpenHome();
+  };
+
+  return (
+    <div className="ws-switch" onClick={() => setOpen((o) => !o)}>
+      <span className="av">{(current?.title || 'M').slice(0, 2).toUpperCase()}</span>
+      <span className="nm">{current?.title || 'Mandat'}</span>
+      <span className="cv"><Icon name="chevron-down" size={15} /></span>
+      {open && (
+        <div className="pop" onClick={(e) => e.stopPropagation()}>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-5)', padding: '4px 10px 6px' }}>
+            Mandat öffnen
+          </div>
+          {workspaces.map((w) => (
+            <SwitcherRow
+              key={w.id}
+              id={w.id}
+              title={w.title}
+              subtitle={w.rechtsform}
+              onOpen={() => { switchWorkspace(w.id); onOpenHome(); setOpen(() => false); }}
+              onRename={renameWorkspace}
+              onDelete={handleDelete}
+            />
+          ))}
+          <div className="po-add">
+            <input
+              className="po-add-input"
+              placeholder="Neues Mandat …"
+              value={newMandat}
+              onChange={(e) => setNewMandat(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && create()}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button className="po-add-btn" onClick={create}><Icon name="plus" size={13} /></button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GovernanceExportNav() {
+  const { data } = useGovernance();
+  return (
+    <>
+      <div className="side-label">Export</div>
+      <div className="nav-i" onClick={() => exportGvMarkdown(data)}>
+        <span className="ico"><Icon name="export" size={15} /></span> Markdown (Obsidian)
+      </div>
+      <div className="nav-i" onClick={() => exportGvJson(data)}>
         <span className="ico"><Icon name="export" size={15} /></span> JSON-Datenstand
       </div>
     </>

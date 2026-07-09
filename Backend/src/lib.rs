@@ -4,6 +4,7 @@ mod auth;
 mod commands;
 mod db;
 mod documents;
+mod governance;
 mod praxis;
 mod strategie;
 
@@ -112,6 +113,12 @@ pub fn run() {
       academia_export::export_chapters_latex,
       academia_export::export_chapters_docx,
       academia_export::export_chapters_pdf,
+      governance::list_governance_workspaces,
+      governance::create_governance_workspace,
+      governance::rename_governance_workspace,
+      governance::delete_governance_workspace,
+      governance::get_governance_data,
+      governance::save_governance_data,
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {
