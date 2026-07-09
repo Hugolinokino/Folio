@@ -1,0 +1,54 @@
+name: Release
+
+# Push a tag like `v0.2.0` (or run this workflow manually) to build the macOS
+# .app/.dmg and publish a draft GitHub Release. Because the updater's
+# `endpoints` in Backend/tauri.conf.json point at
+# `.../releases/latest/download/latest.json`, publishing this release is also
+# what makes already-installed copies of Folio discover the update.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm --prefix Frontend ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the update artifacts so the app's updater (pubkey in
+          # tauri.conf.json) can verify them. Set this repo secret to the
+          # contents of the private key file `tauri signer generate` wrote
+          # (~/.tauri/folio-updater.key) — never commit that file itself.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # --- Apple code signing / notarization (not set up yet) ---
+          # Once there's an Apple Developer Program membership, add these
+          # repo secrets and uncomment to stop Gatekeeper from blocking the
+          # app for anyone who isn't the machine that built it:
+          # APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          # APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          # APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          projectPath: Backend
+          tagName: ${{ github.ref_name }}
+          releaseName: "Folio ${{ github.ref_name }}"
+          releaseBody: "Siehe Commits für Details."
+          releaseDraft: true
+          prerelease: false
