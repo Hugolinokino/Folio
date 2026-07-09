@@ -103,7 +103,7 @@ export function Login({ onUnlocked }: LoginProps) {
                   <input
                     className="input"
                     type="text"
-                    placeholder="Kanzlei Bodenmann"
+                    placeholder="Max Mustermann"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     autoFocus
